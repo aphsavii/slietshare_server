@@ -114,7 +114,7 @@ const generateOTP = asyncHandler(async (req, res) => {
   const setOTP = await redisClient.set(
     `otp:${email}`,
     otp,
-    { EX: 120 },
+    { EX: 300 },
     (err, reply) => {
       if (!reply)
         return res
