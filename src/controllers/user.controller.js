@@ -201,12 +201,6 @@ const logoutUser = asyncHandler(async (req,res) => {
   // delete refresh token 
   // remove cookies
 
- await new Promise((resolve,reject) => {
-    setTimeout(() => {
-      resolve("done");
-    }, 3000);
-  });
-  
   const user = await User.findOneAndUpdate(
     {email:req?.user?.email},
     {

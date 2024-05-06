@@ -102,9 +102,6 @@ const approveQs = asyncHandler(async (req, res) => {
 });
 
 const getQs = asyncHandler(async (req, res) => {
-  // test to delay response
-  // await new Promise((resolve)=>setTimeout(resolve, 5000));
-
   if (!req.query.q || req.query.q == "")
     return res
       .status(400)
