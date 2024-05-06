@@ -11,10 +11,10 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-    if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
+    if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png' || file.mimetype === 'application/pdf') {
         cb(null, true);
     } else {
-        cb(new ApiError('error uploading file',400,['file must be an image of type jpg/jpeg/png']), false);
+        cb(new ApiError('error uploading file',400,['file must be an image of type jpg/jpeg/png/pdf']), false);
     }
 }
 
