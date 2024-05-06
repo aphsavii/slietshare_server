@@ -10,7 +10,8 @@ cloudinary.config({
 async function uploadOnCloudinary(localFilePath,folderPath){
   try {
     if (!localFilePath)   return null;
-    const result = await cloudinary.uploader.upload(localFilePath,{resource_type: "image", folder: folderPath});
+    const fileType = localFilePath.split(".").slice(-1)[0];
+    const result = await cloudinary.uploader.upload(localFilePath,{resource_type: "auto", folder: folderPath});
     fs.unlinkSync(localFilePath); 
     return result.url;
   } catch (error) {
