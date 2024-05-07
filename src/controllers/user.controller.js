@@ -5,21 +5,13 @@ import { User } from "../models/user.model.js";
 import { DEFAULT_AVATAR } from "../constants.js";
 import { uploadOnCloudinary } from "../utils/uploadOnCloudinary.js";
 import { redisClient, verifyOTP } from "../connections/redisConnect.js";
-import { sendMail } from "../utils/sendMail.js";
+import { sendMail } from "../utils/email/sendMail.js";
 import jwt from "jsonwebtoken";
 import { otpFormat } from "../utils/email/otpFormat.js";
 
 // REGISTER USER CONTROLLER
 const registerUser = asyncHandler(async (req, res, next) => {
-  // get user details from frontend as wwell as otp
-  // validation - not empty
-  // check if user already exists: username, email
-  // check for images, check for avatar
-  // upload them to cloudinary, avatar
-  // create user object - create entry in db
-  // remove password and refresh token field from response
-  // check for user creation
-  // return res
+
   const { regno, email, fullName, programme, batch, trade, password, otp } = req.body;
 
   if (
@@ -152,14 +144,7 @@ const generateOTP = asyncHandler(async (req, res) => {
 
 // LOGIN USER CONTROLLER
 const loginUser = asyncHandler(async (req, res) => { 
-//  get email and password from frontend
-// check for empty fields
-// check if user exists
-// compare password
-// generate jwt tokenimport {cook}
 
-// save refresh token in db
-// send jwt token and refresh token in response
 
 const { email, password } = req.body;
 if(!email || !password) return res.status(400).json(new ApiError("Email and password are mandatory",400));
@@ -239,7 +224,7 @@ const refreshTokenToAccessToken = asyncHandler(async (req,res) => {
 
 
 
-  const incomingRefreshToken = req?.cookies?.refreshToken || req?.header("Authorization")?.replace("Bearer ","");
+const incomingRefreshToken = req?.cookies?.refreshToken ?? req?.header("Authorization")?.replace("Bearer ","");
   if(!incomingRefreshToken) return res.status(401).json(new ApiError("Refresh Token is mandatory",401));
 
   const userId = jwt.verify(incomingRefreshToken,process.env.JWT_SECRET)._id;

@@ -2,8 +2,7 @@ import { Qs } from "../models/qs.modal.js";
 import { asyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { uploadOnCloudinary } from "../utils/uploadOnCloudinary.js";
-import { set } from "mongoose";
+import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/uploadOnCloudinary.js";
 
 const uploadQs = asyncHandler(async (req, res) => {
   // check if user is authorized
@@ -16,11 +15,11 @@ const uploadQs = asyncHandler(async (req, res) => {
       .status(401)
       .json(new ApiError("Unauthorized User", 401, ["Inavalid Token"]));
 
-  const { subCode, subName, programme, type, trade, sem,DOE } = req.body;
+  const { subCode, subName, programme, type, trade, sem, DOE } = req.body;
   const user = req.user;
 
   if (
-    [subCode, subName, programme, trade, sem, type,DOE].some((field) => {
+    [subCode, subName, programme, trade, sem, type, DOE].some((field) => {
       let temp = field ?? "";
       return temp == "";
     })
@@ -36,7 +35,7 @@ const uploadQs = asyncHandler(async (req, res) => {
   }
 
   let qsUrl = "";
-  
+
   if (req.files && req.files.qs && req.files.qs.length > 0) {
     let localFilePath = req.files.qs[0].path;
     const uploadUrl = await uploadOnCloudinary(localFilePath, "/qs");
@@ -136,4 +135,48 @@ const getAllPendingQs = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, "All pending question papers", qs));
 });
 
-export { uploadQs, approveQs, getQs, getAllPendingQs };
+const deleteQs = asyncHandler(async (req, res) => {
+  if (!req.user)
+    return res
+      .status(401)
+      .json(new ApiError("Unauthorized Request", 401, ["Invalid Token"]));
+  const qsId = req.params.qsId;
+  const userId = req.user._id;
+
+  const qs = await Qs.findById(qsId);
+  if (!qs) return res.status(404).json(new ApiError("Question paper not found", 404));
+  
+  const uploadedBy = qs.uploadedBy._id;
+  if (req.user?.role !== "admin" && userId.toString() !== uploadedBy.toString())
+    return res
+      .status(401)
+      .json(
+        new ApiError("Unauthorized Request", 401, ["You don't have permission to perform this action"])
+     );
+  const deleteQs = await deleteFromCloudinary(qs.qsUrl);
+  if (!deleteQs)
+    return res.status(500).json(new ApiError("Failed to delete", 500));
+  const deletedQs = await qs.deleteOne();
+  if (!deletedQs)
+    return res.status(500).json(new ApiError("Failed to delete", 500));
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, "Question paper deleted successfully", deletedQs)
+    );
+});
+
+const getQsbyUser = asyncHandler(async (req, res) => {
+  const userId = req.params.userId;
+  const qs = await Qs.find({ uploadedBy: userId }).populate(
+    "uploadedBy",
+    "fullName email"
+  );
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Question papers uploaded by you", qs));
+});
+
+
+export { uploadQs, approveQs, getQs, getAllPendingQs, deleteQs, getQsbyUser};
