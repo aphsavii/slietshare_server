@@ -37,7 +37,7 @@ const qsSchecma = new mongoose.Schema(
     status:{
         type: String ,
         enum: ["pending", "approved"],
-        default: "pending",
+        default: "approved",
     },
     qsUrl:{
         type: String,
