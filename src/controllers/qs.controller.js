@@ -1,4 +1,4 @@
-import { Qs } from "../models/qs.modal.js";
+import { Qs, Qs } from "../models/qs.modal.js";
 import { asyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -35,6 +35,14 @@ const uploadQs = asyncHandler(async (req, res) => {
   }
 
   let qsUrl = "";
+  const modifiedSubCode = subCode.replace(/\s/g, "").toLowerCase().replaceAll('-', '').replaceAll(' ', '').replaceAll('_', '-');
+
+  // Find if same question is already uploaded
+  const alreadyUploaded = await Qs.find(
+    { subCode: { $regex: new RegExp(query, "i") } }
+  )
+
+
 
   if (req.files && req.files.qs && req.files.qs.length > 0) {
     let localFilePath = req.files.qs[0].path;
@@ -45,7 +53,6 @@ const uploadQs = asyncHandler(async (req, res) => {
   if (!qsUrl)
     return res.status(500).json(new ApiError("Failed to upload file", 500));
 
-  const modifiedSubCode = subCode.replace(/\s/g, "").toLowerCase().replaceAll('-', '').replaceAll(' ', '');
 
   const qs = await Qs.create({
     subCode: modifiedSubCode,
@@ -56,6 +63,9 @@ const uploadQs = asyncHandler(async (req, res) => {
     sem,
     DOE,
     qsUrl,
+    ...(alreadyUploaded && {
+      status: 'pending'
+    }),
     uploadedBy: user._id,
   });
 
@@ -145,14 +155,14 @@ const deleteQs = asyncHandler(async (req, res) => {
 
   const qs = await Qs.findById(qsId);
   if (!qs) return res.status(404).json(new ApiError("Question paper not found", 404));
-  
+
   const uploadedBy = qs.uploadedBy._id;
   if (req.user?.role !== "admin" && userId.toString() !== uploadedBy.toString())
     return res
       .status(401)
       .json(
         new ApiError("Unauthorized Request", 401, ["You don't have permission to perform this action"])
-     );
+      );
   const deleteQs = await deleteFromCloudinary(qs.qsUrl);
   if (!deleteQs)
     return res.status(500).json(new ApiError("Failed to delete", 500));
@@ -179,4 +189,4 @@ const getQsbyUser = asyncHandler(async (req, res) => {
 });
 
 
-export { uploadQs, approveQs, getQs, getAllPendingQs, deleteQs, getQsbyUser};
+export { uploadQs, approveQs, getQs, getAllPendingQs, deleteQs, getQsbyUser };
