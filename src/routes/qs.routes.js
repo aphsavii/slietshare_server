@@ -20,6 +20,6 @@ qsRouter.post('/upload', upload.fields([{ name: 'qs', maxCount: 1 }]), verifyJwt
 qsRouter.post('/approve/:qsId', verifyJwt, approveQs);
 qsRouter.get('/pending', getAllPendingQs);
 qsRouter.delete('/delete/:qsId', verifyJwt, deleteQs);
-qsRouter.get('/user/:userId', getQsbyUser);
+qsRouter.get('/user/:userId',verifyJwt, getQsbyUser);
 
 export { qsRouter }

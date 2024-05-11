@@ -141,7 +141,6 @@ const generateOTP = asyncHandler(async (req, res) => {
 });
 
 
-
 // LOGIN USER CONTROLLER
 const loginUser = asyncHandler(async (req, res) => { 
 
@@ -258,5 +257,21 @@ const incomingRefreshToken = req?.cookies?.refreshToken ?? req?.header("Authoriz
 
 });
 
+const getUserDetails = asyncHandler(async (req,res) => {
+  if(!req.user){
+    return res.status(401).json(new ApiError("Unauthorized Request",401));
+  }
+  // get user from frontend
+  const regno = req?.params?.regno;
+  if(!regno) return res.status(400).json(new ApiError("Regno is mandatory",400));
 
-export { registerUser, generateOTP, loginUser, logoutUser, refreshTokenToAccessToken};
+  const user = await User.findOne({regno}).select("-password -refreshToken");
+  if(!user) return res.status(404).json(new ApiError("User not found",404));
+
+  return res.status(200).json(new ApiResponse(200,"User details fetched successfully",user));
+
+  // send user details
+  return res.status(200).json(new ApiResponse(200,"User details fetched successfully",req.user));
+});
+
+export { registerUser, generateOTP, loginUser, logoutUser, refreshTokenToAccessToken, getUserDetails};

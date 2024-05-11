@@ -1,4 +1,4 @@
-import { Qs, Qs } from "../models/qs.modal.js";
+import { Qs } from "../models/qs.modal.js";
 import { asyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -39,9 +39,9 @@ const uploadQs = asyncHandler(async (req, res) => {
 
   // Find if same question is already uploaded
   const alreadyUploaded = await Qs.find(
-    { subCode: { $regex: new RegExp(query, "i") } }
+    { subCode: { $regex: new RegExp(modifiedSubCode, "i") } }
   )
-
+  console.log(alreadyUploaded)
 
 
   if (req.files && req.files.qs && req.files.qs.length > 0) {
@@ -63,7 +63,7 @@ const uploadQs = asyncHandler(async (req, res) => {
     sem,
     DOE,
     qsUrl,
-    ...(alreadyUploaded && {
+    ...(alreadyUploaded.length>0 && {
       status: 'pending'
     }),
     uploadedBy: user._id,
@@ -119,7 +119,7 @@ const getQs = asyncHandler(async (req, res) => {
           "Invalid Query!, query is required",
         ])
       );
-  const query = req.query.q;
+  const query = req?.query?.q;
   const qs = await Qs.find({
     $or: [
       { subCode: { $regex: new RegExp(query, "i") } },
@@ -178,11 +178,68 @@ const deleteQs = asyncHandler(async (req, res) => {
 });
 
 const getQsbyUser = asyncHandler(async (req, res) => {
-  const userId = req.params.userId;
-  const qs = await Qs.find({ uploadedBy: userId }).populate(
-    "uploadedBy",
-    "fullName email"
-  );
+    if (!req.user)
+     return res.status(401).json(
+    new ApiError("Unauthorized request",401)
+  )
+  if (!req.params?.userId)
+    return res
+      .status(400)
+      .json(
+        new ApiError("Invalid Request", 400, [
+          "Invalid User Id!, User Id is required",
+        ])
+      );
+
+  const userRegno = +req.params?.userId;
+  if (!userRegno)
+    return res
+      .status(400)
+      .json(
+        new ApiError("Invalid Request", 400, [
+          "Invalid User Id!, User Id is required",
+        ])
+      );
+      const qs = await Qs.aggregate([
+        {
+          $lookup: {
+            from: "users",
+            localField: "uploadedBy",
+            foreignField: "_id",
+            as: "uploadedBy",
+          },
+        },
+        {
+          $unwind: "$uploadedBy",
+        },
+        {
+          $match: {
+            "uploadedBy.regno": userRegno,
+          },
+        },
+        {
+          $project: {
+            "subCode":1,
+            "subName":1,
+            "programme":1,
+            "trade":1,
+            "sem":1,
+            "DOE":1,
+            "type":1,
+            "status":1,
+            "qsUrl":1,
+            "uploadedBy.regno": 1,
+            "uploadedBy.fullName": 1,
+            "uploadedBy.email":1,
+          },
+        },
+      ]);
+  if (!qs)
+    return res.status(404).json(new ApiError("Question papers not found", 404));
+  if (qs.length == 0)
+    return res.status(404).json(new ApiError("Question papers not found", 404));
+
+
   return res
     .status(200)
     .json(new ApiResponse(200, "Question papers uploaded by you", qs));
