@@ -124,9 +124,9 @@ const otpFormat = (otp,name) =>{
             >
               Need help? Ask at
               <a
-                href="mailto:contact@slietshare.online"
+                href="mailto:info@slietshare.online"
                 style="color: #499fb6; text-decoration: none;"
-                >contact@slietshare.online</a
+                >info@slietshare.online</a
               >
           </main>
     

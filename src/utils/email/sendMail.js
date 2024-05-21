@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { reminderFormat } from "./reminderFormat.js";
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -13,7 +14,7 @@ const transporter = nodemailer.createTransport({
 
 const sendMail = (to, subject, html) => {
   const mailOptions = {
-    from: "noreply@slietshare.online",
+    from: "info@slietshare.online",
     to,
     subject,
     html,
@@ -34,3 +35,4 @@ const sendMail = (to, subject, html) => {
 
 
 export { sendMail };
+
