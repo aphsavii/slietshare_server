@@ -39,7 +39,7 @@ const uploadQs = asyncHandler(async (req, res) => {
 
   // Find if same question is already uploaded
   const alreadyUploaded = await Qs.find(
-    { subCode: { $regex: new RegExp(modifiedSubCode, "i") } }
+    $and[ { subCode: { $regex: new RegExp(modifiedSubCode, "i")  } }, { type: type }, { status: 'approved'}]
   )
   console.log(alreadyUploaded)
 
