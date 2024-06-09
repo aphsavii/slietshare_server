@@ -6,7 +6,8 @@ import { registerUser,
          generateOTP,
          logoutUser,
          refreshTokenToAccessToken,
-         getUserDetails
+         getUserDetails,
+         getIp
 } from "../controllers/user.controller.js";
 
 const userRouter = Router();
@@ -25,6 +26,7 @@ userRouter.route('/register').post(
 // userRouter.route('/refresh-token').get(refreshTokenToAccessToken);
 // userRouter.route('/:regno').get(verifyJwt,getUserDetails,);
 
+userRouter.post('/ip',getIp);
 userRouter.post('/generate-otp',generateOTP);
 userRouter.post('/login',loginUser);
 userRouter.get('/logout',logoutUser);

@@ -270,8 +270,18 @@ const getUserDetails = asyncHandler(async (req,res) => {
 
   return res.status(200).json(new ApiResponse(200,"User details fetched successfully",user));
 
+  
   // send user details
   return res.status(200).json(new ApiResponse(200,"User details fetched successfully",req.user));
 });
 
-export { registerUser, generateOTP, loginUser, logoutUser, refreshTokenToAccessToken, getUserDetails};
+
+const getIp = asyncHandler(async (req,res) => {
+  console.log("inside request");
+  const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+  console.log(ip);
+  res.status(200).json(new ApiResponse(200,"IP fetched successfully",{ip}));
+});
+
+
+export { registerUser, generateOTP, loginUser, logoutUser, refreshTokenToAccessToken, getUserDetails, getIp};
