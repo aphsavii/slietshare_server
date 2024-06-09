@@ -280,8 +280,9 @@ const getIp = asyncHandler(async (req,res) => {
   console.log("inside request");
   const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
   console.log(ip);
-  res.status(200).json(new ApiResponse(200,"IP fetched successfully",{ip}));
+  res.status(200).send('Hola amigo!! kaise ho thik ho?!');
 });
+
 
 
 export { registerUser, generateOTP, loginUser, logoutUser, refreshTokenToAccessToken, getUserDetails, getIp};
