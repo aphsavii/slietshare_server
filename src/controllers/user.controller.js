@@ -280,7 +280,8 @@ const getIp = asyncHandler(async (req,res) => {
   console.log("inside request");
   const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
   console.log(ip);
-  res.status(200).send('Hola amigo!! kaise ho thik ho?!');
+  // res.status(200).send('Hola amigo!! kaise ho thik ho?!');
+  res.redirect('https://www.instagram.com/reel/C76ZmVrICIS/?igsh=MWVnN3FiZXpjbnk1cg==');
 });
 
 
