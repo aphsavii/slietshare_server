@@ -92,9 +92,9 @@ const otpFormat = (otp,name) =>{
                   "
                 >
                      Use the following OTP
-                  to complete the procedure of registration. OTP is
+                  to complete the procedure of registration/Updation. OTP is
                   valid for
-                  <span style="font-weight: 600; color: #1f1f1f;">2 minutes</span>.
+                  <span style="font-weight: 600; color: #1f1f1f;">5 minutes</span>.
                   Do not share this code with others.
                 </p>
                 <p

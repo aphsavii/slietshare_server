@@ -90,12 +90,17 @@ const registerUser = asyncHandler(async (req, res, next) => {
 
 // GENERATE OTP CONTROLLER
 const generateOTP = asyncHandler(async (req, res) => {
-  const {name, email } = req.body;
-  if (!email || !name)
+  let {name, email } = req.body;
+  if (!email)
     return res
       .status(400)
       .json(new ApiResponse(400, "Email and Name is mandatory"));
 
+  if(!name){
+    const user = await User.findOne({email : email});
+    if(!email) return res.status(404).json(new ApiResponse(404,"User not found"));
+    name = user.fullName.split(" ")[0];
+  }
   // OTP GENERATION
   let otp = "";
   for (let i = 0; i < 6; i++) {
@@ -269,21 +274,31 @@ const getUserDetails = asyncHandler(async (req,res) => {
   if(!user) return res.status(404).json(new ApiError("User not found",404));
 
   return res.status(200).json(new ApiResponse(200,"User details fetched successfully",user));
-
-  
-  // send user details
-  return res.status(200).json(new ApiResponse(200,"User details fetched successfully",req.user));
 });
 
 
-const getIp = asyncHandler(async (req,res) => {
-  console.log("inside request");
-  const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-  console.log(ip);
-  // res.status(200).send('Hola amigo!! kaise ho thik ho?!');
-  res.redirect('https://www.instagram.com/reel/C76ZmVrICIS/?igsh=MWVnN3FiZXpjbnk1cg==');
+const resetPassword = asyncHandler(async (req,res) => {
+    // get password and email and otp from frontend
+    // check for empty fields
+    // verify otp
+    // update password
+    // send response
+
+    const {email, password, otp} = req.body;
+    if(!email || !password || !otp) return res.status(400).json(new ApiError("Email, Password and OTP are mandatory",400));
+
+    const user = await User.findOne({email:email});
+    if(!user) return res.status(404).json(new ApiError("User not found",404));
+
+    const verified = await verifyOTP(otp,email);
+    if(!verified) return res.status(401).json(new ApiError("Invalid OTP",401));
+
+    user.password = password;
+    await user.save({validateBeforeSave:false});
+
+    return res.status(200).json(new ApiResponse(200,"Password reset successfully",[]));
+
 });
 
 
-
-export { registerUser, generateOTP, loginUser, logoutUser, refreshTokenToAccessToken, getUserDetails, getIp};
+export { registerUser, generateOTP, loginUser, logoutUser, refreshTokenToAccessToken, getUserDetails, resetPassword};
