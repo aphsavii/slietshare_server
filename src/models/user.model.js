@@ -2,6 +2,116 @@ import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 
+const workExperienceSchema = new mongoose.Schema({
+  company: {
+    type: String,
+    required: [true, "Company name is required"],
+  },
+  position: {
+    type: String,
+    required: [true, "Position is required"],
+  },
+  startDate: {
+    type: String,
+    required: [true, "Start date is required"],
+  },
+  endDate: {
+    type: String,
+    required: [true, "End date is required"],
+  },
+  description: {
+    type: String,
+    required: [true, "Description is required"],
+  },
+});
+
+const educationSchema = new mongoose.Schema({
+  degree: {
+    type: String,
+    required: [true, "Degree is required"],
+  },
+  institute: {
+    type: String,
+    required: [true, "Institute is required"],
+  },
+  startDate: {
+    type: String,
+    required: [true, "Start date is required"],
+  },
+  endDate: {
+    type: String,
+    required: [true, "End date is required"],
+  },
+  description: {
+    type: String,
+    required: [true, "Description is required"],
+  },
+});
+
+const projectSchema = new mongoose.Schema({
+  title: {
+    type: String,
+    required: [true, "Title is required"],
+  },
+  description: {
+    type: String,
+    required: [true, "Description is required"],
+  },
+  link: {
+    type: String,
+    required: [true, "Link is required"],
+  },
+});
+
+const skillSchema = new mongoose.Schema({
+  skill: {
+    type: String,
+    required: [true, "Skill is required"],
+  },
+  proficiency: {
+    type: String,
+    required: [true, "Proficiency is required"],
+    enum: ["Beginner", "Intermediate", "Advanced"]
+  },
+});
+
+const socialLinksSchema = new mongoose.Schema({
+  hackerrank:{
+    type:String,
+  },
+  linkedin:{
+    type:String,
+  },
+  github:{
+    type:String,
+  },
+  codeforces:{
+    type:String,
+  },
+  medium:{
+    type:String,
+  },
+  leetcode:{
+    type:String,
+  },
+  portfolio:{
+    type:String,
+  },
+  interviewbit:{
+    type:String,
+  },
+  codechef:{
+    type:String,
+  },
+  stackoverflow:{
+    type:String,
+  },
+  gfg:{
+    type:String,
+  }
+});
+
+
 const userSchema = new mongoose.Schema(
   {
     regno: {
@@ -49,7 +159,21 @@ const userSchema = new mongoose.Schema(
     },
     avatarUrl:{
       type:String,
-    }
+    },
+    bio: {
+      type: String,
+    },
+    resumeUrl: {
+      type: String,
+    },
+    homeTown: {
+      type: String,
+    },
+    workExperience: [workExperienceSchema],
+    education: [educationSchema],
+    projects: [projectSchema],
+    skills: [skillSchema],
+    socialLinks: socialLinksSchema,
   },
   { timestamps: true }
 );
