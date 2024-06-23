@@ -3,3 +3,4 @@
 ### sample user_pass = test123
 
 #### website link : <a href= "https://slietshare.online/">slietshare.online</a>
+Note:These credentials for viewing the features only. Please don't misuse it.
