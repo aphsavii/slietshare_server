@@ -7,7 +7,8 @@ import { registerUser,
          logoutUser,
          refreshTokenToAccessToken,
          getUserDetails,
-         resetPassword
+         resetPassword,
+         editUserProfile
 } from "../controllers/user.controller.js";
 
 const userRouter = Router();
@@ -25,7 +26,8 @@ userRouter.post('/generate-otp',generateOTP);
 userRouter.post('/login',loginUser);
 userRouter.get('/logout',logoutUser);
 userRouter.get('/refresh-token',refreshTokenToAccessToken);
-userRouter.get('/:regno',verifyJwt,getUserDetails);
 userRouter.post('/forgot-password',resetPassword);
+userRouter.get('/:regno',verifyJwt,getUserDetails);
+userRouter.post('/edit-profile',verifyJwt,editUserProfile);
 
 export {userRouter}

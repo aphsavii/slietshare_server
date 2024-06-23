@@ -97,9 +97,6 @@ const socialLinksSchema = new mongoose.Schema({
   portfolio:{
     type:String,
   },
-  interviewbit:{
-    type:String,
-  },
   codechef:{
     type:String,
   },
@@ -109,6 +106,21 @@ const socialLinksSchema = new mongoose.Schema({
   gfg:{
     type:String,
   }
+});
+
+const achievementSchema = new mongoose.Schema({
+  title: {
+    type: String,
+    required: [true, "Title is required"],
+  },
+  description: {
+    type: String,
+    required: [true, "Description is required"],
+  },
+  date: {
+    type: String,
+    required: [true, "Date is required"],
+  },
 });
 
 
@@ -124,7 +136,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, "Email is required"],
       unique: true,
-      lowecase: true,
+      lowercase: true,
       trim: true,
     },
     fullName: {
@@ -160,17 +172,35 @@ const userSchema = new mongoose.Schema(
     avatarUrl:{
       type:String,
     },
-    bio: {
+    headLine: {
       type: String,
+      trim: true,
+    },
+    about:{
+      type: String,
+      trim: true,
+    },
+    pronouns:{
+      type: String,
+      enum: ["He/Him","She/Her","They/Them","Other"],
     },
     resumeUrl: {
       type: String,
     },
-    homeTown: {
+    location : {
       type: String,
     },
+    points:{
+      type: Number,
+      default: 0,
+    },
+      mobile:{
+      type: String,
+    },
+
     workExperience: [workExperienceSchema],
     education: [educationSchema],
+    achievements: [achievementSchema],
     projects: [projectSchema],
     skills: [skillSchema],
     socialLinks: socialLinksSchema,
