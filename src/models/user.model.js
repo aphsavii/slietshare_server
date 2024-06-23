@@ -190,7 +190,7 @@ const userSchema = new mongoose.Schema(
     location : {
       type: String,
     },
-    points:{
+    coins:{
       type: Number,
       default: 0,
     },

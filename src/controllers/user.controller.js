@@ -301,7 +301,7 @@ const getUserDetails = asyncHandler(async (req, res) => {
   if (!regno)
     return res.status(400).json(new ApiError("Regno is mandatory", 400));
 
-  const user = await User.findOne({ regno }).select("-password -refreshToken -mobile");
+  const user = await User.findOne({ regno }).select("-password -refreshToken -mobile -coins");
   if (!user) return res.status(404).json(new ApiError("User not found", 404));
 
   return res
