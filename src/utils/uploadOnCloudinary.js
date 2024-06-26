@@ -22,7 +22,7 @@ async function uploadOnCloudinary(localFilePath,folderPath){
 }
 
 async function deleteFromCloudinary(publicUrl){
-  if (!publicUrl) return null;
+  if (!publicrl) return null;
   const publicId = publicUrl.split("/").slice(-2)[0].split(".")[0]+"/"+publicUrl.split("/").slice(-1)[0].split(".")[0];
   try {
     if (!publicId)   return null;
