@@ -8,10 +8,6 @@ import fs from "fs";
 
 
 const uploadQs = asyncHandler(async (req, res) => {
-  // check if user is authorized
-  // check each required details about qs is present in req
-  // upload file in cloudinary, return if failed
-  // save in db, return and also delete file from cloudinary if failed;
 
   if (!req.user)
     return res
