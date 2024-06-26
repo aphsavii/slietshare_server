@@ -46,6 +46,9 @@ const educationSchema = new mongoose.Schema({
     type: String,
     required: [true, "Description is required"],
   },
+  grade:{
+    type: String,  
+  }
 });
 
 const projectSchema = new mongoose.Schema({
@@ -76,35 +79,33 @@ const skillSchema = new mongoose.Schema({
 });
 
 const socialLinksSchema = new mongoose.Schema({
-  hackerrank:{
-    type:String,
-  },
-  linkedin:{
-    type:String,
-  },
   github:{
-    type:String,
+    type:String, 
+    default:null
   },
   codeforces:{
     type:String,
-  },
-  medium:{
-    type:String,
+    default:null
   },
   leetcode:{
     type:String,
+    default:null
   },
   portfolio:{
     type:String,
+    default:null
   },
   codechef:{
     type:String,
-  },
-  stackoverflow:{
-    type:String,
+    default:null
   },
   gfg:{
     type:String,
+    default:null
+  },
+  twitter:{
+    type:String,
+    default:null
   }
 });
 
@@ -197,7 +198,7 @@ const userSchema = new mongoose.Schema(
       mobile:{
       type: String,
     },
-
+    profieTags: [String],
     workExperience: [workExperienceSchema],
     education: [educationSchema],
     achievements: [achievementSchema],
