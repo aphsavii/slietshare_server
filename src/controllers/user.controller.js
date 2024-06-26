@@ -3,13 +3,14 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
 import { DEFAULT_AVATAR } from "../constants.js";
-import { uploadOnCloudinary } from "../utils/uploadOnCloudinary.js";
+import { deleteFromCloudinary, uploadOnCloudinary } from "../utils/uploadOnCloudinary.js";
 import { redisClient, verifyOTP } from "../connections/redisConnect.js";
 import { sendMail } from "../utils/email/sendMail.js";
 import jwt from "jsonwebtoken";
 import { otpFormat } from "../utils/email/otpFormat.js";
 import req from "express/lib/request.js";
-
+import sharp from "sharp";
+import fs from "fs";
 // REGISTER USER CONTROLLER
 const registerUser = asyncHandler(async (req, res, next) => {
   const { regno, email, fullName, programme, batch, trade, password, otp } =
@@ -155,6 +156,7 @@ const generateOTP = asyncHandler(async (req, res) => {
 
 // LOGIN USER CONTROLLER
 const loginUser = asyncHandler(async (req, res) => {
+  // await new Promise((resolve) => setTimeout(resolve, 100000));
   const { email, password } = req.body;
   if (!email || !password)
     return res
@@ -204,6 +206,7 @@ const loginUser = asyncHandler(async (req, res) => {
 });
 
 //  LOGOUT USER
+
 const logoutUser = asyncHandler(async (req, res) => {
   // take user from frontend
   // delete refresh token
@@ -235,14 +238,6 @@ const logoutUser = asyncHandler(async (req, res) => {
 
 // REFRESH TOKEN
 const refreshTokenToAccessToken = asyncHandler(async (req, res) => {
-  // get refresh token from frontend
-  // check for empty fields
-  // check if user exists
-  // compare refresh token
-  // generate jwt tokenimport {cook}
-  // save refresh token in db
-  // send jwt token and refresh token in response
-
   const incomingRefreshToken =
     req?.cookies?.refreshToken ??
     req?.header("Authorization")?.replace("Bearer ", "");
@@ -301,7 +296,9 @@ const getUserDetails = asyncHandler(async (req, res) => {
   if (!regno)
     return res.status(400).json(new ApiError("Regno is mandatory", 400));
 
-  const user = await User.findOne({ regno }).select("-password -refreshToken -mobile -coins");
+  const user = await User.findOne({ regno }).select(
+    "-password -refreshToken -mobile -coins"
+  );
   if (!user) return res.status(404).json(new ApiError("User not found", 404));
 
   return res
@@ -310,12 +307,6 @@ const getUserDetails = asyncHandler(async (req, res) => {
 });
 
 const resetPassword = asyncHandler(async (req, res) => {
-  // get password and email and otp from frontend
-  // check for empty fields
-  // verify otp
-  // update password
-  // send response
-
   const { email, password, otp } = req.body;
   if (!email || !password || !otp)
     return res
@@ -337,42 +328,101 @@ const resetPassword = asyncHandler(async (req, res) => {
 });
 
 const getMyProfile = asyncHandler(async (req, res) => {
-    const regno = req.user.regno;
-    if(!regno) return res.status(400).json(new ApiError("Unauthorized Request", 401));
-
-    const user = await User.findOne({ regno }).select("-password -refreshToken");
-    if(!user) return res.status(404).json(new ApiError("User not found", 404));
-
-    return res.status(200).json(new ApiResponse(200, "User details fetched successfully", user));
-});
-
-const editUserProfile = asyncHandler(async (req,res) => {
-  // get user from frontend
-  // check for empty fields
-  // check if user exists
-  // update user details
-  // send response
-  
-
-  const regno = req?.user?.regno;
-
-  if(req.body.email || req.body.regno || req.body.password || req.body.refreshToken) return res.status(400).json(new ApiError("Unauthorized Request", 401));
-  
+  const regno = req.user.regno;
   if (!regno)
     return res.status(400).json(new ApiError("Unauthorized Request", 401));
 
   const user = await User.findOne({ regno }).select("-password -refreshToken");
   if (!user) return res.status(404).json(new ApiError("User not found", 404));
 
- for(let field in req.body){
-    user[field] = req.body[field];
-};
-  await user.save({ validateBeforeSave: false });
+  res.setHeader("Cache-Control", "public, max-age=86400");
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "User details fetched successfully", user));
+});
 
+// Edit profile controllers
+const editBasicInfo = asyncHandler(async (req,res) => {
+  const regno = req?.user?.regno;
+  if (!regno)
+    return res.status(401).json(new ApiError("Unauthorized reqeust!", 401));
+
+  const { headLine, pronouns } = req.body;
+  if (!headLine || !pronouns)
+    return res
+      .status(400)
+      .json(new ApiError("Headline and pronouns are mandatory", 400));
+
+  const user = await User.findOne({ regno }).select("headLine pronouns avatarUrl");
+  if (!user) return res.status(404).json(new ApiError("User not found", 404));
+
+  if (
+    req.files &&
+    Array.isArray(req.files.avatar) &&
+    req.files.avatar.length > 0
+  ) {
+    const localAvatarUrl = req.files.avatar[0]?.path;
+    const compressedAvatarPath = req.files.avatar[0]?.path.replace(
+      ".",
+      "_compressed."
+    );
+    await sharp(localAvatarUrl)
+      .webp({ quality: 80 }).toFile(compressedAvatarPath);
+    const upload = await uploadOnCloudinary(compressedAvatarPath, "/avatar");
+    if (!upload)
+      return res
+        .status(500)
+        .json(
+          new ApiError("Internal Server Error", 500, ["Error uploading avatar"])
+        );
+    if(user.avatarUrl !== DEFAULT_AVATAR){
+      const deleted = await deleteFromCloudinary(user.avatarUrl);
+      if (!deleted) console.log("Error deleting old avatar");
+    } 
+    user.avatarUrl = upload;
+    fs.unlinkSync(localAvatarUrl);
+  }
+
+  user.headLine = headLine;
+  user.pronouns = pronouns;
+
+  await user.save({ validateBeforeSave: false });
   return res
     .status(200)
     .json(new ApiResponse(200, "User details updated successfully", user));
+});
 
+const editUserProfile = asyncHandler(async (req, res) => {
+  const regno = req?.user?.regno;
+
+  if (
+    req.body.email ||
+    req.body.regno ||
+    req.body.password ||
+    req.body.refreshToken
+  )
+    return res.status(400).json(new ApiError("Unauthorized Request", 401));
+
+  if (!regno)
+    return res.status(400).json(new ApiError("Unauthorized Request", 401));
+
+  const user = await User.findOne({ regno }).select(`-password -refreshToken`);
+  if (!user) return res.status(404).json(new ApiError("User not found", 404));
+
+
+  for (let field in req.body) {
+    user[field] = req.body[field];
+  }
+  await user.save({ validateBeforeSave: false });
+
+  let editedData = {};
+  for (let field in req.body) {
+    editedData[field] = user[field];
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "User details updated successfully", editedData));
 });
 
 export {
@@ -383,5 +433,7 @@ export {
   refreshTokenToAccessToken,
   getUserDetails,
   resetPassword,
-  editUserProfile
+  getMyProfile,
+  editBasicInfo,
+  editUserProfile,
 };

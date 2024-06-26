@@ -8,7 +8,8 @@ import { registerUser,
          refreshTokenToAccessToken,
          getUserDetails,
          resetPassword,
-         editUserProfile
+         editUserProfile,
+         editBasicInfo
 } from "../controllers/user.controller.js";
 
 const userRouter = Router();
@@ -29,5 +30,7 @@ userRouter.get('/refresh-token',refreshTokenToAccessToken);
 userRouter.post('/forgot-password',resetPassword);
 userRouter.get('/:regno',verifyJwt,getUserDetails);
 userRouter.post('/edit-profile',verifyJwt,editUserProfile);
+userRouter.post('/edit-basic-profile',upload.fields([{name:'avatar',maxCount:1}]),verifyJwt,editBasicInfo);
+
 
 export {userRouter}
