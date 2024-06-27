@@ -187,7 +187,7 @@ const loginUser = asyncHandler(async (req, res) => {
   };
 
   const loggedInUser = await User.findById(user._id).select(
-    "-password -refreshToken"
+    "-password -refreshToken -mobile -coins -createdAt -updatedAt -__v  -education -workExperience -projects -achievements -skills -socialLinks -profileTags -location -about -resumeUrl"
   );
   loggedInUser.refreshToken = refreshToken;
   await loggedInUser.save({ validateBeforeSave: false });
