@@ -11,6 +11,7 @@ import { otpFormat } from "../utils/email/otpFormat.js";
 import req from "express/lib/request.js";
 import sharp from "sharp";
 import fs from "fs";
+import Follow from "../models/follow.modal.js";
 // REGISTER USER CONTROLLER
 const registerUser = asyncHandler(async (req, res, next) => {
   const { regno, email, fullName, programme, batch, trade, password, otp } =
@@ -291,20 +292,38 @@ const getUserDetails = asyncHandler(async (req, res) => {
   if (!req.user) {
     return res.status(401).json(new ApiError("Unauthorized Request", 401));
   }
-  // get user from frontend
+
+  // Get user from frontend
   const regno = req?.params?.regno;
-  if (!regno)
+  if (!regno) {
     return res.status(400).json(new ApiError("Regno is mandatory", 400));
+  }
 
   const user = await User.findOne({ regno }).select(
     "-password -refreshToken -mobile -coins"
   );
-  if (!user) return res.status(404).json(new ApiError("User not found", 404));
+  if (!user) {
+    return res.status(404).json(new ApiError("User not found", 404));
+  }
+
+  const followers = await Follow.find({ following: user._id }).countDocuments();
+  const isFollowing = await Follow.findOne({
+    follower: req.user._id,
+    following: user._id,
+  });
+
+
+
+  // Convert Mongoose document to plain JavaScript object
+  const userObject = user.toObject();
+  userObject.followers = followers;
+  userObject.isFollowing = isFollowing ? true : false;
 
   return res
     .status(200)
-    .json(new ApiResponse(200, "User details fetched successfully", user));
+    .json(new ApiResponse(200, "User details fetched successfully", userObject));
 });
+
 
 const resetPassword = asyncHandler(async (req, res) => {
   const { email, password, otp } = req.body;
@@ -335,10 +354,13 @@ const getMyProfile = asyncHandler(async (req, res) => {
   const user = await User.findOne({ regno }).select("-password -refreshToken");
   if (!user) return res.status(404).json(new ApiError("User not found", 404));
 
-  res.setHeader("Cache-Control", "public, max-age=86400");
+  const followers = await Follow.find({ following: user._id }).countDocuments();
+  const userObject = user.toObject();
+  userObject.followers = followers;
+
   return res
     .status(200)
-    .json(new ApiResponse(200, "User details fetched successfully", user));
+    .json(new ApiResponse(200, "User details fetched successfully", userObject));
 });
 
 // Edit profile controllers
@@ -425,6 +447,27 @@ const editUserProfile = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, "User details updated successfully", editedData));
 });
 
+const searchUsers = asyncHandler(async (req, res) => {
+  const { q } = req.query;
+  if (!q)
+    return res.status(400).json(new ApiError("Search query is mandatory", 400));
+
+  const users = await User.find({
+    $or: [
+      { fullName: { $regex: q, $options: "i" } },
+      { headLine: { $regex: q, $options: "i" } },
+      {email: { $regex: q, $options: "i" } },
+      { programme: { $regex: q, $options: "i" } },
+      { trade: { $regex: q, $options: "i" } },
+    ],
+  }).limit(5).select("fullName regno headLine avatarUrl programme trade");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Users fetched successfully", users));
+}
+);
+
 export {
   registerUser,
   generateOTP,
@@ -436,4 +479,5 @@ export {
   getMyProfile,
   editBasicInfo,
   editUserProfile,
+  searchUsers
 };

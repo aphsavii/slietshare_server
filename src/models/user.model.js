@@ -219,11 +219,11 @@ userSchema.methods.comparePassword = async function (password) {
 };
 
 userSchema.methods.generateAccessToken =async function(){
-   return jwt.sign({_id:this._id}, process.env.JWT_SECRET, {expiresIn: process.env.ACCESS_TOKEN_EXPIRY});
+   return jwt.sign({_id:this._id,regno:this.regno}, process.env.JWT_SECRET, {expiresIn: process.env.ACCESS_TOKEN_EXPIRY});
 }
 
 userSchema.methods.generateRefreshToken = async function(){
-    return jwt.sign({_id:this._id}, process.env.JWT_SECRET, {expiresIn: process.env.REFRESH_TOKEN_EXPIRY});
+    return jwt.sign({_id:this._id,regno:this.regno}, process.env.JWT_SECRET, {expiresIn: process.env.REFRESH_TOKEN_EXPIRY});
 }
 
 userSchema.methods.generateAccessAndRefreshToken =async function(){

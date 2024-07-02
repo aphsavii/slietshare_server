@@ -9,8 +9,10 @@ import { registerUser,
          getUserDetails,
          resetPassword,
          editUserProfile,
-         editBasicInfo
+         editBasicInfo,
+         searchUsers
 } from "../controllers/user.controller.js";
+import { followUser, unfollowUser,getMyFollowers } from "../controllers/follow.controller.js";
 
 const userRouter = Router();
 
@@ -28,9 +30,13 @@ userRouter.post('/login',loginUser);
 userRouter.get('/logout',logoutUser);
 userRouter.get('/refresh-token',refreshTokenToAccessToken);
 userRouter.post('/forgot-password',resetPassword);
+userRouter.get('/followers',verifyJwt,getMyFollowers);
+userRouter.get('/search',verifyJwt,searchUsers);
 userRouter.get('/:regno',verifyJwt,getUserDetails);
 userRouter.post('/edit-profile',verifyJwt,editUserProfile);
 userRouter.post('/edit-basic-profile',upload.fields([{name:'avatar',maxCount:1}]),verifyJwt,editBasicInfo);
+userRouter.put('/follow/:regno',verifyJwt,followUser);
+userRouter.delete('/unfollow/:regno',verifyJwt,unfollowUser);
 
 
 export {userRouter}
