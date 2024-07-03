@@ -8,10 +8,11 @@ import { redisClient, verifyOTP } from "../connections/redisConnect.js";
 import { sendMail } from "../utils/email/sendMail.js";
 import jwt from "jsonwebtoken";
 import { otpFormat } from "../utils/email/otpFormat.js";
-import req from "express/lib/request.js";
 import sharp from "sharp";
 import fs from "fs";
 import Follow from "../models/follow.modal.js";
+import { getUnreadNotifications } from "../webSockets/utils/index.js";
+
 // REGISTER USER CONTROLLER
 const registerUser = asyncHandler(async (req, res, next) => {
   const { regno, email, fullName, programme, batch, trade, password, otp } =
@@ -468,6 +469,16 @@ const searchUsers = asyncHandler(async (req, res) => {
 }
 );
 
+const getNotifications = asyncHandler(async (req, res) => {
+  const regno = req?.user?.regno;
+  if (!regno)
+    return res.status(401).json(new ApiError("Unauthorized Request", 401));
+  const notifications = await getUnreadNotifications(regno);
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Notifications fetched successfully", notifications));
+});
+
 export {
   registerUser,
   generateOTP,
@@ -479,5 +490,6 @@ export {
   getMyProfile,
   editBasicInfo,
   editUserProfile,
-  searchUsers
+  searchUsers,
+  getNotifications,
 };

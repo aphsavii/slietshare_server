@@ -1,4 +1,4 @@
-const Notification = (to = "", type = "", read = false, timestamp = Date.now()) => {
+const Notification = (to, type  , read = false, timestamp = Date.now()) => {
   return {
     to,
     type,

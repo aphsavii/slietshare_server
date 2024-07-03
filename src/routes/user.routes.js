@@ -10,7 +10,8 @@ import { registerUser,
          resetPassword,
          editUserProfile,
          editBasicInfo,
-         searchUsers
+         searchUsers,
+         getNotifications
 } from "../controllers/user.controller.js";
 import { followUser, unfollowUser,getMyFollowers } from "../controllers/follow.controller.js";
 
@@ -37,6 +38,7 @@ userRouter.post('/edit-profile',verifyJwt,editUserProfile);
 userRouter.post('/edit-basic-profile',upload.fields([{name:'avatar',maxCount:1}]),verifyJwt,editBasicInfo);
 userRouter.put('/follow/:regno',verifyJwt,followUser);
 userRouter.delete('/unfollow/:regno',verifyJwt,unfollowUser);
+userRouter.get('/notifications/unread',verifyJwt,getNotifications);
 
 
 export {userRouter}

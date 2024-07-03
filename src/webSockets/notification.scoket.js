@@ -1,7 +1,7 @@
 import { redisClient } from "../connections/redisConnect.js";
 import { asyncHandler } from "../utils/AsyncHandler.js";
 import { io } from "../app.js";
-import { isUserActive, saveNotification, getAllNotifications, getUnreadNotifications } from "./utils/index.js";
+import { isUserActive, saveNotification, getUnreadNotifications,markNotificationsAsRead } from "./utils/index.js";
 import { Notification } from "../utils/Notification.js";
 import { User } from "../models/user.model.js";
 
@@ -12,23 +12,23 @@ try {
         const regno = socket.user.regno;
     
         socket.on('notification:set', async (data) => {
-            const { to, type } = data;
+            const { to, type ,sender} = data;
             const notification = Notification(to, type);
-            
-            await saveNotification(to, notification);
-
-            const receiver = await isUserActive(to);
-            if(!receiver) return;
-
-            const sender = User.findOne({regno}).select('fullName, avatarUrl, regno, trade, batch');
             
             const message = {
                 sender,
-                notification,
+                message:notification,
             };
-            io.to(receiver).emit('notification:new',  message.toString() );
-        });
+            await saveNotification(to, message);
 
+            const receiver = await isUserActive(to);
+            if(!receiver) return;
+            console.log(message)
+            io.to(receiver).emit('notification:new',  message );
+        });
+        socket.on("notification:markAsRead", async (data) => {
+            const markAsRead = await markNotificationsAsRead(regno);
+        });
 
 } catch (error) {
     console.log(error)
