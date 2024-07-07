@@ -12,6 +12,7 @@ import sharp from "sharp";
 import fs from "fs";
 import Follow from "../models/follow.modal.js";
 import { getUnreadNotifications } from "../webSockets/utils/index.js";
+import { convertToWebp } from "../utils/convertToWebp.js";
 
 // REGISTER USER CONTROLLER
 const registerUser = asyncHandler(async (req, res, next) => {
@@ -385,13 +386,10 @@ const editBasicInfo = asyncHandler(async (req,res) => {
     req.files.avatar.length > 0
   ) {
     const localAvatarUrl = req.files.avatar[0]?.path;
-    const compressedAvatarPath = req.files.avatar[0]?.path.replace(
-      ".",
-      "_compressed."
-    );
-    await sharp(localAvatarUrl)
-      .webp({ quality: 80 }).toFile(compressedAvatarPath);
-    const upload = await uploadOnCloudinary(compressedAvatarPath, "/avatar");
+    const webpUrl = await convertToWebp(localAvatarUrl, 80);
+    if (!webpUrl) return res.status(500).json(new ApiError("Internal Server Error", 500, ["Error compressing avatar"]));
+ 
+    const upload = await uploadOnCloudinary(webpUrl, "/avatar");
     if (!upload)
       return res
         .status(500)
@@ -403,7 +401,6 @@ const editBasicInfo = asyncHandler(async (req,res) => {
       if (!deleted) console.log("Error deleting old avatar");
     } 
     user.avatarUrl = upload;
-    fs.unlinkSync(localAvatarUrl);
   }
 
   user.headLine = headLine;

@@ -44,7 +44,7 @@ io.on('connection',(socket)=>{
 import {userRouter} from './routes/user.routes.js';
 import {qsRouter} from './routes/qs.routes.js';
 import { getMyProfile } from './controllers/user.controller.js';
-
+import { postRouter } from './routes/post.routes.js';
 
 app.get('/',(req,res)=>{
     res.send('hello world!!')
@@ -54,4 +54,6 @@ app.get('/',(req,res)=>{
 app.use('/me',verifyJwt,getMyProfile);
 app.use('/user', userRouter);
 app.use('/qs', qsRouter);
+app.use('/post',postRouter);
+
 export {httpServer,io};
