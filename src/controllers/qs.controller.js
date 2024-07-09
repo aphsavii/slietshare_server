@@ -3,12 +3,11 @@ import { asyncHandler } from "../utils/AsyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/uploadOnCloudinary.js";
+import sharp from "sharp";
+import fs from "fs";
+
 
 const uploadQs = asyncHandler(async (req, res) => {
-  // check if user is authorized
-  // check each required details about qs is present in req
-  // upload file in cloudinary, return if failed
-  // save in db, return and also delete file from cloudinary if failed;
 
   if (!req.user)
     return res
@@ -43,12 +42,17 @@ const uploadQs = asyncHandler(async (req, res) => {
       $and:[ { subCode: { $regex: new RegExp(modifiedSubCode, "i")  } }, { type: type }, { status: 'approved'}]
     }
   )
-  console.log(alreadyUploaded)
+  // console.log(alreadyUploaded)
 
 
   if (req.files && req.files.qs && req.files.qs.length > 0) {
     let localFilePath = req.files.qs[0].path;
-    const uploadUrl = await uploadOnCloudinary(localFilePath, "/qs");
+    let compressedFilePath = req.files.qs[0].path + '.webp';
+    if(!localFilePath.includes('pdf')) await sharp(localFilePath).webp({ quality: 80 }).toFile(compressedFilePath);
+    const uploadUrl = await uploadOnCloudinary(localFilePath.includes('pdf')?localFilePath:compressedFilePath, "/qs");
+    if (!uploadUrl)
+      return res.status(500).json(new ApiError("Failed to upload file", 500));
+    if (!localFilePath.includes('pdf'))fs.unlinkSync(localFilePath); 
     qsUrl = uploadUrl;
   }
 

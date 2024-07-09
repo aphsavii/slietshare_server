@@ -8,17 +8,25 @@ const postSchema = new mongoose.Schema({
     mediaUrl:[String],
     tags: {
         type: [String],
-        required: [true, "Tags are required"],
     },
-    views: {
+    status:{
+        type:String,
+        enum:["active","archeived"],
+        default:"active"
+    },
+    share:{
         type: Number,
-        default: 0,
+        default: 0
     },
-    user: {
+    createdBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
     },
-});
+},
+{
+    timestamps: true,
+}
+);
 
 const Post = mongoose.model("Post", postSchema);
 

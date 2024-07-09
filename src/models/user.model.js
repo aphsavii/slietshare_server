@@ -44,8 +44,10 @@ const educationSchema = new mongoose.Schema({
   },
   description: {
     type: String,
-    required: [true, "Description is required"],
   },
+  grade:{
+    type: String,  
+  }
 });
 
 const projectSchema = new mongoose.Schema({
@@ -76,39 +78,49 @@ const skillSchema = new mongoose.Schema({
 });
 
 const socialLinksSchema = new mongoose.Schema({
-  hackerrank:{
-    type:String,
-  },
-  linkedin:{
-    type:String,
-  },
   github:{
-    type:String,
+    type:String, 
+    default:null
   },
   codeforces:{
     type:String,
-  },
-  medium:{
-    type:String,
+    default:null
   },
   leetcode:{
     type:String,
+    default:null
   },
   portfolio:{
     type:String,
-  },
-  interviewbit:{
-    type:String,
+    default:null
   },
   codechef:{
     type:String,
-  },
-  stackoverflow:{
-    type:String,
+    default:null
   },
   gfg:{
     type:String,
+    default:null
+  },
+  twitter:{
+    type:String,
+    default:null
   }
+});
+
+const achievementSchema = new mongoose.Schema({
+  title: {
+    type: String,
+    required: [true, "Title is required"],
+  },
+  description: {
+    type: String,
+    required: [true, "Description is required"],
+  },
+  date: {
+    type: String,
+    required: [true, "Date is required"],
+  },
 });
 
 
@@ -124,7 +136,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, "Email is required"],
       unique: true,
-      lowecase: true,
+      lowercase: true,
       trim: true,
     },
     fullName: {
@@ -160,17 +172,35 @@ const userSchema = new mongoose.Schema(
     avatarUrl:{
       type:String,
     },
-    bio: {
+    headLine: {
       type: String,
+      trim: true,
+    },
+    about:{
+      type: String,
+      trim: true,
+    },
+    pronouns:{
+      type: String,
+      enum: ["He/Him","She/Her","They/Them","Other"],
     },
     resumeUrl: {
       type: String,
     },
-    homeTown: {
+    location : {
       type: String,
     },
+    coins:{
+      type: Number,
+      default: 0,
+    },
+      mobile:{
+      type: String,
+    },
+    profieTags: [String],
     workExperience: [workExperienceSchema],
     education: [educationSchema],
+    achievements: [achievementSchema],
     projects: [projectSchema],
     skills: [skillSchema],
     socialLinks: socialLinksSchema,
@@ -189,11 +219,11 @@ userSchema.methods.comparePassword = async function (password) {
 };
 
 userSchema.methods.generateAccessToken =async function(){
-   return jwt.sign({_id:this._id}, process.env.JWT_SECRET, {expiresIn: process.env.ACCESS_TOKEN_EXPIRY});
+   return jwt.sign({_id:this._id,regno:this.regno}, process.env.JWT_SECRET, {expiresIn: process.env.ACCESS_TOKEN_EXPIRY});
 }
 
 userSchema.methods.generateRefreshToken = async function(){
-    return jwt.sign({_id:this._id}, process.env.JWT_SECRET, {expiresIn: process.env.REFRESH_TOKEN_EXPIRY});
+    return jwt.sign({_id:this._id,regno:this.regno}, process.env.JWT_SECRET, {expiresIn: process.env.REFRESH_TOKEN_EXPIRY});
 }
 
 userSchema.methods.generateAccessAndRefreshToken =async function(){

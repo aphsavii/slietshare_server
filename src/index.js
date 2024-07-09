@@ -1,9 +1,9 @@
 import {dbConnect} from "./connections/dbConnect.js";
-import { app } from "./app.js";
+import { httpServer } from "./app.js";
 
 
 dbConnect().then(() => {
-    app.listen(process.env.APP_PORT || 5000, () =>
+  httpServer.listen(process.env.APP_PORT || 5000, () =>
       console.log("App is running on port", process.env.APP_PORT)
     );
   })
