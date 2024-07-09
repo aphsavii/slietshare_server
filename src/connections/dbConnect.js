@@ -6,7 +6,7 @@ const dbConnect = async () => {
   try {
     // DB CONNECTION
     const connectionInstance = await mongoose.connect(dbUrl);
-    console.log("Connected to database on url ", dbUrl);
+    console.log("Connected to MonogoDB ");
   } catch (error) {
     console.log("Error connecting to database", error);
   }

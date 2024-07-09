@@ -129,7 +129,7 @@ const postsByUser = asyncHandler(async (req, res) => {
         "createdBy.trade": 1,
       },
     },
-  ]);
+  ])
 
   return res
     .status(200)
@@ -137,17 +137,11 @@ const postsByUser = asyncHandler(async (req, res) => {
 });
 
 const getRecommendedPost = asyncHandler(async (req, res) => {
-  const { page, limit } = req.query;
-  if (!page || !limit)
-    return res
-      .status(400)
-      .json(
-        new ApiError("Page and limit is required", 400, [
-          "Page and limit are required",
-        ])
-      );
-    const skip = (page - 1) * limit;
-    const posts = await Post.aggregate([
+  const page = req.query.page || 1;
+  const limit = +req.query.limit || 10;
+
+  const skip = (page - 1) * limit;
+  const posts = await Post.aggregate([
     {
       $match: {
         status: "active",
@@ -172,10 +166,45 @@ const getRecommendedPost = asyncHandler(async (req, res) => {
         mediaUrl: 1,
         tags: 1,
         createdAt: 1,
+        shares: 1,
         createdBy: {
           $arrayElemAt: ["$createdBy", 0],
         },
       },
+    },
+    {
+      $lookup:{
+        from: "likes",
+        localField: "_id",
+        foreignField: "postId",
+        as: "likes"
+      }
+    },
+    {
+      $addFields:{
+        likesCount: {
+          $size: "$likes"
+        },
+        isLiked: {
+          $in: [new mongoose.Types.ObjectId(req.user._id), "$likes.user"]
+        }
+      },
+    },
+    {
+      $lookup:{
+        from: "comments",
+        localField: "_id",
+        foreignField: "postId",
+        as: "comments"
+      }
+    },
+    {
+      $addFields:{
+        commentsCount: {
+          $size: "$comments"
+        },
+        comments: "$comments"
+      }
     },
     {
       $project: {
@@ -183,19 +212,37 @@ const getRecommendedPost = asyncHandler(async (req, res) => {
         mediaUrl: 1,
         tags: 1,
         createdAt: 1,
+        likesCount: 1,
+        commentsCount: 1,
+        isLiked: 1,
+        comments: 1,
+        shares: 1,
         "createdBy._id": 1,
         "createdBy.fullName": 1,
         "createdBy.regno": 1,
         "createdBy.trade": 1,
+        "createdBy.avatarUrl": 1,
+        "createdBy.headLine": 1,
       },
     },
+    {
+      $sort: {
+        likesCount: -1,
+        commentsCount: -1,
+        createdAt: -1
+      }
+    },
+    {
+      $skip: skip,
+    },
+    {
+      $limit: limit
+    }
   ]);
-  
-    return res
-      .status(200)
-      .json(new ApiResponse(200, "Posts Fetched successfully", posts));
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Posts Fetched successfully", posts));
 });
 
-
-
-export { createPost, deletePost, postsByUser };
+export { createPost, deletePost, postsByUser, getRecommendedPost };
