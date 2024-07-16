@@ -5,9 +5,8 @@ import { verifyJwt } from './middlewares/auth.middleware.js';
 import {Server} from 'socket.io';
 import { createServer } from 'http';
 import { socketJwt } from './middlewares/socket-auth.middleware.js';
-import { notificationEvents } from './webSockets/notification.scoket.js';
 import { setActiveUser, removeActiveUser } from './webSockets/utils/index.js';
-
+import { notificationEvents } from './webSockets/notification.scoket.js';
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer,{
