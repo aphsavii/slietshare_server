@@ -282,13 +282,6 @@ const getRecommendedPost = asyncHandler(async (req, res) => {
       },
     },
     {
-      $sort: {
-        likesCount: -1,
-        commentsCount: -1,
-        createdAt: -1,
-      },
-    },
-    {
       $skip: skip,
     },
     {

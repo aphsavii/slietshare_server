@@ -37,7 +37,7 @@ const notificationEvents = async (socket) => {
     // Like notification
     socket.on("post:like", async (data) => {
       const { to, postId, sender } = data;
-      const notification = Notification(regno, "like");
+      const notification = Notification(to, "like");
       const message = {
         sender,
         message: notification,
@@ -56,12 +56,13 @@ const notificationEvents = async (socket) => {
     // Comment notification
     socket.on("post:comment", async (data) => {
       const { to, postId, sender, content } = data;
-      const notification = Notification(regno, "comment");
+      const notification = Notification(to, "comment");
       const message = {
         sender,
         message: notification,
       };
       await Comment.create({ post: postId, user: userId, content });
+      if (regno == to) return;
       await saveNotification(to, message);
       const receiver = await isUserActive(to);
       if (!receiver) return;
