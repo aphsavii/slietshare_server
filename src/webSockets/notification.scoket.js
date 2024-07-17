@@ -37,12 +37,12 @@ const notificationEvents = async (socket) => {
     // Like notification
     socket.on("post:like", async (data) => {
       const { to, postId, sender } = data;
-      const notification = Notification(to, "like");
+      const notification = Notification(to, "like", postId);
       const message = {
         sender,
         message: notification,
       };
-      const isLiked = await Like.findOne({ user: userId, post:postId });
+      const isLiked = await Like.findOne({ user: userId, post: postId });
       if (isLiked) return;
 
       await Like.create({ post: postId, user: userId });
@@ -56,7 +56,7 @@ const notificationEvents = async (socket) => {
     // Comment notification
     socket.on("post:comment", async (data) => {
       const { to, postId, sender, content } = data;
-      const notification = Notification(to, "comment");
+      const notification = Notification(to, "comment", postId);
       const message = {
         sender,
         message: notification,
