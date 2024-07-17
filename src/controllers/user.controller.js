@@ -3,7 +3,10 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
 import { DEFAULT_AVATAR } from "../constants.js";
-import { deleteFromCloudinary, uploadOnCloudinary } from "../utils/uploadOnCloudinary.js";
+import {
+  deleteFromCloudinary,
+  uploadOnCloudinary,
+} from "../utils/uploadOnCloudinary.js";
 import { redisClient, verifyOTP } from "../connections/redisConnect.js";
 import { sendMail } from "../utils/email/sendMail.js";
 import jwt from "jsonwebtoken";
@@ -314,8 +317,6 @@ const getUserDetails = asyncHandler(async (req, res) => {
     following: user._id,
   });
 
-
-
   // Convert Mongoose document to plain JavaScript object
   const userObject = user.toObject();
   userObject.followers = followers;
@@ -323,9 +324,10 @@ const getUserDetails = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, "User details fetched successfully", userObject));
+    .json(
+      new ApiResponse(200, "User details fetched successfully", userObject)
+    );
 });
-
 
 const resetPassword = asyncHandler(async (req, res) => {
   const { email, password, otp } = req.body;
@@ -362,11 +364,13 @@ const getMyProfile = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, "User details fetched successfully", userObject));
+    .json(
+      new ApiResponse(200, "User details fetched successfully", userObject)
+    );
 });
 
 // Edit profile controllers
-const editBasicInfo = asyncHandler(async (req,res) => {
+const editBasicInfo = asyncHandler(async (req, res) => {
   const regno = req?.user?.regno;
   if (!regno)
     return res.status(401).json(new ApiError("Unauthorized reqeust!", 401));
@@ -377,7 +381,9 @@ const editBasicInfo = asyncHandler(async (req,res) => {
       .status(400)
       .json(new ApiError("Headline and pronouns are mandatory", 400));
 
-  const user = await User.findOne({ regno }).select("headLine pronouns avatarUrl");
+  const user = await User.findOne({ regno }).select(
+    "headLine pronouns avatarUrl"
+  );
   if (!user) return res.status(404).json(new ApiError("User not found", 404));
 
   if (
@@ -387,8 +393,15 @@ const editBasicInfo = asyncHandler(async (req,res) => {
   ) {
     const localAvatarUrl = req.files.avatar[0]?.path;
     const webpUrl = await convertToWebp(localAvatarUrl, 80);
-    if (!webpUrl) return res.status(500).json(new ApiError("Internal Server Error", 500, ["Error compressing avatar"]));
- 
+    if (!webpUrl)
+      return res
+        .status(500)
+        .json(
+          new ApiError("Internal Server Error", 500, [
+            "Error compressing avatar",
+          ])
+        );
+
     const upload = await uploadOnCloudinary(webpUrl, "/avatar");
     if (!upload)
       return res
@@ -396,10 +409,10 @@ const editBasicInfo = asyncHandler(async (req,res) => {
         .json(
           new ApiError("Internal Server Error", 500, ["Error uploading avatar"])
         );
-    if(user.avatarUrl !== DEFAULT_AVATAR){
+    if (user.avatarUrl !== DEFAULT_AVATAR) {
       const deleted = await deleteFromCloudinary(user.avatarUrl);
       if (!deleted) console.log("Error deleting old avatar");
-    } 
+    }
     user.avatarUrl = upload;
   }
 
@@ -429,7 +442,6 @@ const editUserProfile = asyncHandler(async (req, res) => {
   const user = await User.findOne({ regno }).select(`-password -refreshToken`);
   if (!user) return res.status(404).json(new ApiError("User not found", 404));
 
-
   for (let field in req.body) {
     user[field] = req.body[field];
   }
@@ -442,29 +454,36 @@ const editUserProfile = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, "User details updated successfully", editedData));
+    .json(
+      new ApiResponse(200, "User details updated successfully", editedData)
+    );
 });
 
 const searchUsers = asyncHandler(async (req, res) => {
   const { q } = req.query;
   if (!q)
     return res.status(400).json(new ApiError("Search query is mandatory", 400));
-
   const users = await User.find({
-    $or: [
-      { fullName: { $regex: q, $options: "i" } },
-      { headLine: { $regex: q, $options: "i" } },
-      {email: { $regex: q, $options: "i" } },
-      { programme: { $regex: q, $options: "i" } },
-      { trade: { $regex: q, $options: "i" } },
+    $and: [
+      {
+        $or: [
+          { fullName: { $regex: q, $options: "i" } },
+          { headLine: { $regex: q, $options: "i" } },
+          { email: { $regex: q, $options: "i" } },
+          { programme: { $regex: q, $options: "i" } },
+          { trade: { $regex: q, $options: "i" } },
+        ],
+      },
+      { regno: { $ne: +req.user.regno } }, // exclude users with the specified regno
     ],
-  }).limit(5).select("fullName regno headLine avatarUrl programme trade");
+  })
+    .limit(5)
+    .select("fullName regno headLine avatarUrl programme trade");
 
   return res
     .status(200)
     .json(new ApiResponse(200, "Users fetched successfully", users));
-}
-);
+});
 
 const getNotifications = asyncHandler(async (req, res) => {
   const regno = req?.user?.regno;
@@ -473,7 +492,30 @@ const getNotifications = asyncHandler(async (req, res) => {
   const notifications = await getUnreadNotifications(regno);
   return res
     .status(200)
-    .json(new ApiResponse(200, "Notifications fetched successfully", notifications));
+    .json(
+      new ApiResponse(200, "Notifications fetched successfully", notifications)
+    );
+});
+
+const suggestedProfiles = asyncHandler(async (req, res) => {
+  const regno = req?.user?.regno;
+  if (!regno)
+    return res.status(401).json(new ApiError("Unauthorized Request", 401));
+  const followingList = await Follow.find({ regno: regno }).select("following");
+  const followingIds = followingList.map((f) => f.following);
+
+  const suggestedUsers = await User.aggregate([
+    {
+      $match: {
+        _id: { $nin: [req.user._id, ...followingIds] },
+      },
+    },
+    { $sample: { size: 5 } },
+    { $project: { fullName: 1, regno: 1, trade: 1, headLine: 1, avatarUrl:1 } },
+  ]);
+
+  if(!suggestedUsers) return res.status(404).json(new ApiError("No suggested profiles found",404));
+  return res.status(200).json(new ApiResponse(200, "Suggested profiles fetched successfully", suggestedUsers));
 });
 
 export {
@@ -489,4 +531,5 @@ export {
   editUserProfile,
   searchUsers,
   getNotifications,
+  suggestedProfiles
 };
