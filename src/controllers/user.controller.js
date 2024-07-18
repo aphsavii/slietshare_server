@@ -508,14 +508,29 @@ const suggestedProfiles = asyncHandler(async (req, res) => {
     {
       $match: {
         _id: { $nin: [req.user._id, ...followingIds] },
+        regno: { $nin: [0, 2010215] },
+
       },
     },
     { $sample: { size: 5 } },
-    { $project: { fullName: 1, regno: 1, trade: 1, headLine: 1, avatarUrl:1 } },
+    {
+      $project: { fullName: 1, regno: 1, trade: 1, headLine: 1, avatarUrl: 1 },
+    },
   ]);
 
-  if(!suggestedUsers) return res.status(404).json(new ApiError("No suggested profiles found",404));
-  return res.status(200).json(new ApiResponse(200, "Suggested profiles fetched successfully", suggestedUsers));
+  if (!suggestedUsers)
+    return res
+      .status(404)
+      .json(new ApiError("No suggested profiles found", 404));
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        "Suggested profiles fetched successfully",
+        suggestedUsers
+      )
+    );
 });
 
 export {
@@ -531,5 +546,5 @@ export {
   editUserProfile,
   searchUsers,
   getNotifications,
-  suggestedProfiles
+  suggestedProfiles,
 };
