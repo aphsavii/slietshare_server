@@ -15,7 +15,7 @@ const postRouter = Router();
 
 postRouter.put("/create", verifyJwt, upload.fields([{name:"media",maxCount:1}]) , createPost);
 postRouter.delete("/delete/:id", verifyJwt, deletePost);
-postRouter.get("/user/:id", verifyJwt, postsByUser);
+postRouter.get("/user/:regno", verifyJwt, postsByUser);
 postRouter.get("/feed",verifyJwt,getRecommendedPost);
 postRouter.get("/:id",verifyJwt,getPostById);
 postRouter.delete("/unlike/:postId", verifyJwt, unlikePost);

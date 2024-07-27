@@ -7,6 +7,7 @@ import { uploadOnCloudinary } from "../utils/uploadOnCloudinary.js";
 import Like from "../models/like.modal.js";
 import Comment from "../models/comment.modal.js";
 import mongoose from "mongoose";
+import { User } from "../models/user.model.js";
 
 const createPost = asyncHandler(async (req, res) => {
   const { title, tags } = req.body;
@@ -82,11 +83,13 @@ const postsByUser = asyncHandler(async (req, res) => {
         ])
       );
   const skip = (page - 1) * limit;
-  const userId = req.params.id;
-  if (!userId)
+  const regno = req.params.regno;
+  if (!regno)
     return res
       .status(400)
-      .json(new ApiError("User id is required", 400, ["User id is required"]));
+      .json(new ApiError("User id is required", 400, ["regno is required"]));
+
+  const userId = await User.findOne({ regno: regno }).select("_id");
 
   const posts = await Post.aggregate([
     {
@@ -109,13 +112,84 @@ const postsByUser = asyncHandler(async (req, res) => {
       },
     },
     {
-      $project: {
-        title: 1,
-        mediaUrl: 1,
-        tags: 1,
-        createdAt: 1,
-        createdBy: {
-          $arrayElemAt: ["$createdBy", 0],
+      $unwind: "$createdBy",
+    },
+    {
+      $lookup: {
+        from: "likes",
+        localField: "_id",
+        foreignField: "post",
+        as: "likes",
+      },
+    },
+    {
+      $addFields: {
+        likesCount: {
+          $size: "$likes",
+        },
+        isLiked: {
+          $in: [new mongoose.Types.ObjectId(req.user._id), "$likes.user"],
+        },
+      },
+    },
+    {
+      $lookup: {
+        from: "comments",
+        localField: "_id",
+        foreignField: "post",
+        as: "comments",
+      },
+    },
+    {
+      $addFields: {
+        commentsCount: {
+          $size: "$comments",
+        },
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "comments.user",
+        foreignField: "_id",
+        as: "commentUsers",
+      },
+    },
+    {
+      $addFields: {
+        comments: {
+          $map: {
+            input: "$comments",
+            as: "comment",
+            in: {
+              $mergeObjects: [
+                "$$comment",
+                {
+                  userDetails: {
+                    $arrayElemAt: [
+                      {
+                        $filter: {
+                          input: "$commentUsers",
+                          cond: { $eq: ["$$this._id", "$$comment.user"] },
+                        },
+                      },
+                      0,
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        },
+      },
+    },
+    {
+      $addFields: {
+        sortedComments: {
+          $sortArray: {
+            input: "$comments",
+            sortBy: { createdAt: -1 },
+          },
         },
       },
     },
@@ -125,11 +199,43 @@ const postsByUser = asyncHandler(async (req, res) => {
         mediaUrl: 1,
         tags: 1,
         createdAt: 1,
-        "createdBy._id": 1,
-        "createdBy.fullName": 1,
-        "createdBy.regno": 1,
-        "createdBy.trade": 1,
+        likesCount: 1,
+        commentsCount: 1,
+        isLiked: 1,
+        shares: 1,
+        createdBy: {
+          _id: 1,
+          fullName: 1,
+          regno: 1,
+          trade: 1,
+          avatarUrl: 1,
+          headLine: 1,
+        },
+        comments: {
+          $map: {
+            input: "$sortedComments",
+            as: "comment",
+            in: {
+              _id: "$$comment._id",
+              content: "$$comment.content",
+              createdAt: "$$comment.createdAt",
+              userDetails: {
+                _id: "$$comment.userDetails._id",
+                fullName: "$$comment.userDetails.fullName",
+                avatarUrl: "$$comment.userDetails.avatarUrl",
+                regno: "$$comment.userDetails.regno",
+                headLine: "$$comment.userDetails.headLine",
+              },
+            },
+          },
+        },
       },
+    },
+    {
+      $skip: skip,
+    },
+    {
+      $limit: +limit,
     },
   ]);
 
@@ -137,6 +243,7 @@ const postsByUser = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, "Posts Fetched successfully", posts));
 });
+
 
 const getRecommendedPost = asyncHandler(async (req, res) => {
   const page = req.query.page || 1;
