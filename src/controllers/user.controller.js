@@ -509,7 +509,6 @@ const suggestedProfiles = asyncHandler(async (req, res) => {
       $match: {
         _id: { $nin: [req.user._id, ...followingIds] },
         regno: { $nin: [0, 2010215] },
-
       },
     },
     { $sample: { size: 5 } },

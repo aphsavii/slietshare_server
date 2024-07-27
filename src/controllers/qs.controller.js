@@ -187,7 +187,11 @@ const getQsbyUser = asyncHandler(async (req, res) => {
     if (!req.user)
      return res.status(401).json(
     new ApiError("Unauthorized request",401)
-  )
+  );
+
+  const page = +req?.query?.page || 1;
+  const limit = +req?.query?.limit || 10;
+
   if (!req.params?.userId)
     return res
       .status(400)
@@ -239,12 +243,23 @@ const getQsbyUser = asyncHandler(async (req, res) => {
             "uploadedBy.email":1,
           },
         },
+        {
+          $sort: {
+            createdAt: -1,
+          },
+        },
+        {
+          $skip: (page - 1) * limit,
+        },
+        {
+          $limit: limit,
+        },
       ]);
-  if (!qs)
-    return res.status(404).json(new ApiError("Question papers not found", 404));
-  if (qs.length == 0)
-    return res.status(404).json(new ApiError("Question papers not found", 404));
 
+  if (!qs)
+    return res.status(404).json(new ApiError("Question papers not found", 404,));
+  if (qs.length == 0)
+    return res.status(200).json(new ApiResponse(200, "Question papers uploaded by you", qs))
 
   return res
     .status(200)
