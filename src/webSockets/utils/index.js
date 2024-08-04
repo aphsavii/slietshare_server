@@ -10,7 +10,7 @@ const setActiveUser = async (socketId, regno) => {
 
 const isUserActive = async (regno) => {
   try {
-    const activeUser = await redisClient.hGet("activeUsers", regno);
+    const activeUser = await redisClient.hGet("activeUsers", regno.toString());
     return activeUser;
   } catch (error) {
     console.log(error);

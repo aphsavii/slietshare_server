@@ -6,7 +6,8 @@ import {Server} from 'socket.io';
 import { createServer } from 'http';
 import { socketJwt } from './middlewares/socket-auth.middleware.js';
 import { setActiveUser, removeActiveUser } from './webSockets/utils/index.js';
-import { notificationEvents } from './webSockets/notification.scoket.js';
+import { socketEvents } from './webSockets/index.js';
+
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer,{
@@ -30,12 +31,11 @@ app.use(cors({origin:process.env.CORS_ORIGIN, credentials:true}));
 io.on('connection',(socket)=>{
     console.log('user connected',socket.id,"->",socket.user.regno);
     setActiveUser(socket.id,socket.user.regno);
-    notificationEvents(socket);
     socket.on('disconnect',()=>{
         console.log('user disconnected',socket.id,"->",socket.user.regno);
         removeActiveUser(socket.user.regno);
     });
-  
+   socketEvents(socket);
 });
 
 
@@ -44,6 +44,7 @@ import {userRouter} from './routes/user.routes.js';
 import {qsRouter} from './routes/qs.routes.js';
 import { getMyProfile } from './controllers/user.controller.js';
 import { postRouter } from './routes/post.routes.js';
+import { chatRouter } from './routes/chat.routes.js';
 
 app.get('/',(req,res)=>{
     res.send('hello world!!')
@@ -54,5 +55,6 @@ app.use('/me',verifyJwt,getMyProfile);
 app.use('/user', userRouter);
 app.use('/qs', qsRouter);
 app.use('/post',postRouter);
+app.use('/chat',chatRouter);
 
 export {httpServer,io};
