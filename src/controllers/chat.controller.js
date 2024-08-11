@@ -28,9 +28,10 @@ const getRecentChats = asyncHandler(async (req, res) => {
     const lastMessage = await redisClient.hGetAll(`message:${lastMessageId}`);
     chats.push({ lastMessage, conversationId: chat, regno,avatarUrl:user.avatarUrl,fullName:user.fullName, isUnreadMessages });
   }
+  
   res
     .status(200)
-    .json(new ApiResponse(200, "recent chats fetched sucessfully", chats));
+    .json(new ApiResponse(200, "recent chats fetched sucessfully", chats.reverse()));
 });
 
 const getConversation = asyncHandler(async (req, res) => {
@@ -42,6 +43,7 @@ const getConversation = asyncHandler(async (req, res) => {
   let conversation = [];
   for (let messageId of messages) {
     const messageData = await redisClient.hGetAll(`message:${messageId}`);
+    if(messageData.timestamp)
     conversation.push(messageData);
   }
 
