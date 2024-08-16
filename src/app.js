@@ -7,7 +7,6 @@ import { createServer } from 'http';
 import { socketJwt } from './middlewares/socket-auth.middleware.js';
 import { setActiveUser, removeActiveUser } from './webSockets/utils/index.js';
 import { socketEvents } from './webSockets/index.js';
-
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer,{
@@ -45,7 +44,7 @@ import {qsRouter} from './routes/qs.routes.js';
 import { getMyProfile } from './controllers/user.controller.js';
 import { postRouter } from './routes/post.routes.js';
 import { chatRouter } from './routes/chat.routes.js';
-
+import leaderboardRouter from './routes/leaderboard.routes.js';
 app.get('/',(req,res)=>{
     res.send('hello world!!')
 });
@@ -56,5 +55,6 @@ app.use('/user', userRouter);
 app.use('/qs', qsRouter);
 app.use('/post',postRouter);
 app.use('/chat',chatRouter);
+app.use('/leaderboard',leaderboardRouter);
 
 export {httpServer,io};
