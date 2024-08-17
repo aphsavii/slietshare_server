@@ -3,6 +3,7 @@ import {
   LEETCODE_BASE_URL,
   CODEFORCES_BASE_URL,
   GFG_BASE_URL,
+  LEETCODE_GQL_QUERY,
 } from "../constants.js";
 import { User } from "../models/user.model.js";
 import { asyncHandler } from "../utils/AsyncHandler.js";
@@ -15,30 +16,28 @@ const getLastRouteSegment = (url) => {
   return segments[segments.length - 1];
 };
 
-const getLeetcodeData = async (username) => {
+const getLeetCodeData = async (userName) => {
   try {
-    const [solvedResponse, contestResponse, rankingResponse] =
-      await Promise.all([
-        axios.get(`${LEETCODE_BASE_URL + username}/solved`),
-        axios.get(`${LEETCODE_BASE_URL + username}/contest`),
-        axios.get(`${LEETCODE_BASE_URL + username}`),
-      ]);
-
-    const questionsSolved = solvedResponse.data["acSubmissionNum"][0].count;
-    const contestRating = contestResponse.data["contestRating"];
-    const globalRank = rankingResponse.data["ranking"];
-    return {
-      error: false,
-      questionsSolved,
-      contestRating,
-      globalRank,
+    const response = await axios.post(LEETCODE_BASE_URL, {
+      query: LEETCODE_GQL_QUERY,
+      variables: {
+        username: userName,
+      },
+    });
+    const result = {
+      username: userName,
+      constestRating: response.data.data.userContestRanking.rating,
+      globalRank: response.data.data.userContestRanking.globalRanking,
+      questionsSolved:
+        response.data.data.matchedUser.submitStats.acSubmissionNum[0].count +
+        "/" +
+        response.data.data.allQuestionsCount[0].count,
+      stars: response.data.data.matchedUser.profile.starRating,
     };
+    return result;
   } catch (error) {
-    console.log(error);
-    return {
-      error: true,
-      message: error.message,
-    };
+    console.log(error,error);
+    return null;
   }
 };
 
@@ -97,10 +96,10 @@ const getGFGData = async (username) => {
   }
 };
 
-const allUsersLeetcodeData = async (usernames) => {
+const allUsersLeetcodeData = async (userNames) => {
   const data = await Promise.all(
-    usernames.map(async (username) => {
-      return await getLeetcodeData(username);
+    userNames.map(async (userName) => {
+      return await getLeetCodeData(userName);
     })
   );
   return data;
@@ -120,10 +119,10 @@ const allUsersGFGData = async (usernames) => {
   return data;
 };
 
-const getCodeforcesLeaderboard = asyncHandler(async (req,res) => {
+const getCodeforcesLeaderboard = asyncHandler(async (req, res) => {
   // Fetch users with Codeforces links from the database
   const codeforcesUsers = await User.find({
-    "socialLinks.codeforces": { $exists: true, $ne: null },
+    "socialLinks.codeforces": { $type: "string", $ne: "" },
   }).select("fullName socialLinks.codeforces regno");
 
   // Extract usernames from the social links
@@ -178,7 +177,7 @@ const getCodeforcesLeaderboard = asyncHandler(async (req,res) => {
 const getGFGLeaderboard = asyncHandler(async (req, res) => {
   // Fetch users with GFG links from the database
   const gfgUsers = await User.find({
-    "socialLinks.gfg": { $exists: true, $ne: null },
+    "socialLinks.gfg": { $type: "string", $ne: "" },
   }).select("fullName socialLinks.gfg regno");
 
   // Extract usernames from the social links
@@ -200,7 +199,9 @@ const getGFGLeaderboard = asyncHandler(async (req, res) => {
     }
     gfgData = gfgApiResponse;
   } catch (error) {
-    return res.status(500).json(new ApiError(500,"Something went wrong",['Error fetching data']));
+    return res
+      .status(500)
+      .json(new ApiError(500, "Something went wrong", ["Error fetching data"]));
   }
 
   // Merge the API data with the corresponding user information
@@ -217,9 +218,59 @@ const getGFGLeaderboard = asyncHandler(async (req, res) => {
     return b.gfgData.score - a.gfgData.score;
   });
 
-
   return res
     .status(200)
     .json(new ApiResponse(200, "data fetched sucessfully", sortedGfgData));
 });
-export { getGFGLeaderboard, getCodeforcesLeaderboard };
+
+const getLeetcodeLeaderboard = asyncHandler(async (req, res) => {
+  // Fetch users with LeetCode links from the database
+  const leetcodeUsers = await User.find({
+    "socialLinks.leetcode": { $type: "string", $ne: "" }
+  }).select("fullName socialLinks.leetcode regno");
+  
+
+  // Extract usernames from the social links
+  const leetcodeUsernames = leetcodeUsers.map((user) => ({
+    regno: user.regno,
+    username: getLastRouteSegment(user.socialLinks.leetcode),
+  }));
+  
+  // Fetch LeetCode data from the API
+  let leetcodeData = [];
+  try {
+    const leetcodeApiResponse = await allUsersLeetcodeData(
+      leetcodeUsernames.map((user) => user.username)
+    );
+
+    // Process LeetCode API response
+    if (!Array.isArray(leetcodeApiResponse)) {
+      throw new Error("LeetCode API did not return an array as expected.");
+    }
+    leetcodeData = leetcodeApiResponse;
+  } catch (error) {
+    return res
+      .status(500)
+      .json(new ApiError(500, "Something went wrong", ["Error fetching data"]));
+  }
+
+  // Merge the API data with the corresponding user information
+  const mergedLeetcodeData = leetcodeUsers.map((user) => {
+    const apiData = leetcodeData.find(
+      (data) => data.username === getLastRouteSegment(user.socialLinks.leetcode)
+    );
+    return { ...user.toObject(), leetcodeData: apiData || null };
+  });
+
+  const sortedLeetcodeData = mergedLeetcodeData.sort((a, b) => {
+    if (!a.leetcodeData) return 1;
+    if (!b.leetcodeData) return -1;
+    return b.leetcodeData.constestRating - a.leetcodeData.constestRating;
+  });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Data fetched successfully", sortedLeetcodeData));
+}); 
+
+export { getGFGLeaderboard, getCodeforcesLeaderboard, getLeetcodeLeaderboard };
