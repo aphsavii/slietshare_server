@@ -12,10 +12,10 @@ import { registerUser,
          editBasicInfo,
          searchUsers,
          getNotifications,
-         suggestedProfiles
+         suggestedProfiles,
 } from "../controllers/user.controller.js";
 import { followUser, unfollowUser,getMyFollowers } from "../controllers/follow.controller.js";
-
+import { validateProfile } from "../controllers/validate.controller.js";
 const userRouter = Router();
 
 userRouter.route('/register').post( 
@@ -27,6 +27,7 @@ userRouter.route('/register').post(
 ]),registerUser);
 
 
+userRouter.post('/validate-profile',validateProfile);
 userRouter.post('/generate-otp',generateOTP);
 userRouter.post('/login',loginUser);
 userRouter.get('/logout',logoutUser);
