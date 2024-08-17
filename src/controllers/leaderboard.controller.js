@@ -17,6 +17,7 @@ const getLastRouteSegment = (url) => {
 };
 
 const getLeetCodeData = async (userName) => {
+  console.log(userName);
   try {
     const response = await axios.post(LEETCODE_BASE_URL, {
       query: LEETCODE_GQL_QUERY,
@@ -24,15 +25,17 @@ const getLeetCodeData = async (userName) => {
         username: userName,
       },
     });
+    console.log(response.data.data);
     const result = {
       username: userName,
-      constestRating: response.data.data.userContestRanking.rating,
-      globalRank: response.data.data.userContestRanking.globalRanking,
+      constestRating: response.data.data?.userContestRanking?.rating,
+      globalRank: response.data.data?.userContestRanking?.globalRanking,
       questionsSolved:
         response.data.data.matchedUser.submitStats.acSubmissionNum[0].count +
         "/" +
         response.data.data.allQuestionsCount[0].count,
       stars: response.data.data.matchedUser.profile.starRating,
+      ranking: response.data.data.matchedUser.profile.ranking,
     };
     return result;
   } catch (error) {
@@ -229,7 +232,7 @@ const getLeetcodeLeaderboard = asyncHandler(async (req, res) => {
     "socialLinks.leetcode": { $type: "string", $ne: "" }
   }).select("fullName socialLinks.leetcode regno");
   
-
+  // return res.status(200).json(new ApiResponse(200, "Data fetched successfully", leetcodeUsers));
   // Extract usernames from the social links
   const leetcodeUsernames = leetcodeUsers.map((user) => ({
     regno: user.regno,
@@ -261,12 +264,21 @@ const getLeetcodeLeaderboard = asyncHandler(async (req, res) => {
     );
     return { ...user.toObject(), leetcodeData: apiData || null };
   });
-
-  const sortedLeetcodeData = mergedLeetcodeData.sort((a, b) => {
-    if (!a.leetcodeData) return 1;
-    if (!b.leetcodeData) return -1;
-    return b.leetcodeData.constestRating - a.leetcodeData.constestRating;
-  });
+  
+  // Step 1: Sort the users with valid contestRating
+  const validLeetcodeData = mergedLeetcodeData
+    .filter(user => user.leetcodeData && user.leetcodeData.contestRating != null)
+    .sort((a, b) => b.leetcodeData.contestRating - a.leetcodeData.contestRating);
+  
+  // Step 2: Collect users with null or undefined contestRating
+  const invalidLeetcodeData = mergedLeetcodeData
+    .filter(user => !user.leetcodeData || user.leetcodeData.contestRating == null);
+  
+  // Step 3: Combine the two arrays, with invalid data appended at the end
+  const sortedLeetcodeData = [...validLeetcodeData, ...invalidLeetcodeData];
+  
+  console.log(sortedLeetcodeData);
+  
 
   return res
     .status(200)
