@@ -25,7 +25,6 @@ const getLeetCodeData = async (userName) => {
         username: userName,
       },
     });
-    console.log(response.data.data);
     const result = {
       username: userName,
       constestRating: response.data.data?.userContestRanking?.rating,
@@ -277,7 +276,6 @@ const getLeetcodeLeaderboard = asyncHandler(async (req, res) => {
   // Step 3: Combine the two arrays, with invalid data appended at the end
   const sortedLeetcodeData = [...validLeetcodeData, ...invalidLeetcodeData];
   
-  console.log(sortedLeetcodeData);
   
 
   return res
