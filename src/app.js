@@ -9,12 +9,7 @@ import { setActiveUser, removeActiveUser } from './webSockets/utils/index.js';
 import { socketEvents } from './webSockets/index.js';
 const app = express();
 const httpServer = createServer(app);
-const io = new Server(httpServer,{
-    cors: {
-        origin: "*",
-      },
-    },
-);
+const io = new Server(httpServer);
 
 // Middlewares
 io.use((socket,next)=>{
@@ -25,7 +20,6 @@ app.use(express.json({limit:'16kb'}));
 app.use(express.urlencoded({ extended: true, limit:'16kb' }));
 app.use(cookieParser());
 app.use(express.static('public'));
-app.use(cors( {origin: ['http://localhost:5173','https://slietshare.online'], credentials: true} ));  
 
 io.on('connection',(socket)=>{
     console.log('user connected',socket.id,"->",socket.user.regno);
