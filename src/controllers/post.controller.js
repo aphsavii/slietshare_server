@@ -3,7 +3,10 @@ import Post from "../models/post.modal.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import { convertToWebp } from "../utils/convertToWebp.js";
-import { uploadOnCloudinary } from "../utils/uploadOnCloudinary.js";
+import {
+  deleteFromCloudinary,
+  uploadOnCloudinary,
+} from "../utils/uploadOnCloudinary.js";
 import Like from "../models/like.modal.js";
 import Comment from "../models/comment.modal.js";
 import mongoose from "mongoose";
@@ -55,12 +58,23 @@ const deletePost = asyncHandler(async (req, res) => {
       .status(400)
       .json(new ApiError("Id is required", 400, ["Id is required"]));
 
-  const post = await Post.findByIdAndDelete(id);
-  if (!post)
+  const post = await Post.findById(id).select("mediaUrl");
+  const deletedMedia = await deleteFromCloudinary(post.mediaUrl[0]);
+  if (!deletedMedia)
+    return res
+      .status(500)
+      .json(
+        new ApiError("Something went wrong", 500, [
+          "Error deleting image from cloudinary server",
+        ])
+      );
+  const postDelete = await Post.findByIdAndDelete(id);
+
+  if (!postDelete)
     return res
       .status(404)
       .json(new ApiError("Post not found", 404, ["Post not found"]));
-  if (post.createdBy.toString() !== user._id.toString())
+  if (postDelete.createdBy.toString() !== user._id.toString())
     return res
       .status(403)
       .json(
@@ -243,7 +257,6 @@ const postsByUser = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, "Posts Fetched successfully", posts));
 });
-
 
 const getRecommendedPost = asyncHandler(async (req, res) => {
   const page = req.query.page || 1;

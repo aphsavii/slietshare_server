@@ -13,6 +13,8 @@ import { registerUser,
          searchUsers,
          getNotifications,
          suggestedProfiles,
+         userProfileView,
+         getProfileViews
 } from "../controllers/user.controller.js";
 import { followUser, unfollowUser,getMyFollowers } from "../controllers/follow.controller.js";
 import { validateProfile } from "../controllers/validate.controller.js";
@@ -27,6 +29,7 @@ userRouter.route('/register').post(
 ]),registerUser);
 
 
+userRouter.get('/profile-views',verifyJwt,getProfileViews);
 userRouter.post('/validate-profile',validateProfile);
 userRouter.post('/generate-otp',generateOTP);
 userRouter.post('/login',loginUser);
@@ -42,6 +45,6 @@ userRouter.delete('/unfollow/:regno',verifyJwt,unfollowUser);
 userRouter.get('/notifications/unread',verifyJwt,getNotifications);
 userRouter.get('/suggested-profiles',verifyJwt,suggestedProfiles);
 userRouter.get('/:regno',verifyJwt,getUserDetails);
-
+userRouter.post('/view-profile/:regno',verifyJwt,userProfileView);
 
 export {userRouter}

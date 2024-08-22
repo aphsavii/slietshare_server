@@ -532,6 +532,58 @@ const suggestedProfiles = asyncHandler(async (req, res) => {
     );
 });
 
+const userProfileView = asyncHandler(async (req, res) => {
+  const viewer = req?.user?.regno;
+  const { regno } = req?.params;
+
+  if (!regno)
+    return res.status(400).json(new ApiError("Regno is mandatory", 400));
+
+  if (!viewer)
+    return res.status(401).json(new ApiError("Unauthorized Request", 401));
+
+  const add = await redisClient.hSet(
+    `profileView:${regno}`,
+    viewer,
+    Date.now().toString()
+  );
+
+  res.status(200).json(new ApiResponse(200, "profile viewed successfuly"));
+});
+
+const getProfileViews = asyncHandler(async (req, res) => {
+  const regno = req?.user?.regno;
+  if (!regno)
+    return res.status(401).json(new ApiError("Unauthorized Request", 401));
+
+  // if view time is greater that 24 hours delete the view and update the whole list
+  let viewers = await redisClient.hGetAll(`profileView:${regno}`);
+  const currentTime = Date.now();
+  for (let viewer in viewers) {
+    if (currentTime - viewers[viewer] > 86400000 * 7) {
+      await redisClient.hDel(`profileView:${regno}`, viewer);
+      viewers[viewer] = undefined;
+    }
+  }
+
+  let users = Object.keys(viewers).filter((key) => viewers[key] !== undefined);
+
+  users = await User.find({ regno: { $in: users } }).select(
+    "fullName regno avatarUrl headLine"
+  );
+
+  users = users.map((user) => {
+    return {
+      ...user.toObject(),
+      viewTime: viewers[user.regno],
+    };
+  });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Profile views fetched successfully", users));
+});
+
 export {
   registerUser,
   generateOTP,
@@ -546,4 +598,6 @@ export {
   searchUsers,
   getNotifications,
   suggestedProfiles,
+  userProfileView,
+  getProfileViews,
 };
