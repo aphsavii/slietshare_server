@@ -38,7 +38,7 @@ const getLeetCodeData = async (userName) => {
     };
     return result;
   } catch (error) {
-    console.log(error,error);
+    console.log(error, error);
     return null;
   }
 };
@@ -228,16 +228,15 @@ const getGFGLeaderboard = asyncHandler(async (req, res) => {
 const getLeetcodeLeaderboard = asyncHandler(async (req, res) => {
   // Fetch users with LeetCode links from the database
   const leetcodeUsers = await User.find({
-    "socialLinks.leetcode": { $type: "string", $ne: "" }
+    "socialLinks.leetcode": { $type: "string", $ne: "" },
   }).select("fullName socialLinks.leetcode regno");
-  
-  // return res.status(200).json(new ApiResponse(200, "Data fetched successfully", leetcodeUsers));
+
   // Extract usernames from the social links
   const leetcodeUsernames = leetcodeUsers.map((user) => ({
     regno: user.regno,
     username: getLastRouteSegment(user.socialLinks.leetcode),
   }));
-  
+
   // Fetch LeetCode data from the API
   let leetcodeData = [];
   try {
@@ -263,24 +262,34 @@ const getLeetcodeLeaderboard = asyncHandler(async (req, res) => {
     );
     return { ...user.toObject(), leetcodeData: apiData || null };
   });
-  
-  // Step 1: Sort the users with valid contestRating
-  const validLeetcodeData = mergedLeetcodeData
-    .filter(user => user.leetcodeData && user.leetcodeData.contestRating != null)
-    .sort((a, b) => b.leetcodeData.contestRating - a.leetcodeData.contestRating);
-  
-  // Step 2: Collect users with null or undefined contestRating
-  const invalidLeetcodeData = mergedLeetcodeData
-    .filter(user => !user.leetcodeData || user.leetcodeData.contestRating == null);
-  
-  // Step 3: Combine the two arrays, with invalid data appended at the end
-  const sortedLeetcodeData = [...validLeetcodeData, ...invalidLeetcodeData];
-  
-  
+
+  // Helper function to get the number of problems solved
+  const getProblemsSolved = (user) => {
+    if (!user.leetcodeData || !user.leetcodeData.questionsSolved) return 0;
+    const solved = user.leetcodeData.questionsSolved.split('/')[0];
+    return parseInt(solved, 10) || 0;
+  };
+
+  // Sort the users:
+  // 1. Users with valid contestRating (sorted by contestRating in descending order)
+  // 2. Users without contestRating (sorted by problemsSolved in descending order)
+  const sortedLeetcodeData = mergedLeetcodeData.sort((a, b) => {
+    const ratingA = a.leetcodeData?.contestRating || a.leetcodeData?.constestRating;
+    const ratingB = b.leetcodeData?.contestRating || b.leetcodeData?.constestRating;
+
+    if (ratingA != null && ratingB != null) {
+      return ratingB - ratingA;
+    }
+    if (ratingA != null) return -1;
+    if (ratingB != null) return 1;
+    return getProblemsSolved(b) - getProblemsSolved(a);
+  });
 
   return res
     .status(200)
-    .json(new ApiResponse(200, "Data fetched successfully", sortedLeetcodeData));
-}); 
+    .json(
+      new ApiResponse(200, "Data fetched successfully", sortedLeetcodeData)
+    );
+});
 
 export { getGFGLeaderboard, getCodeforcesLeaderboard, getLeetcodeLeaderboard };
