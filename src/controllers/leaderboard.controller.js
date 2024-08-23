@@ -17,7 +17,6 @@ const getLastRouteSegment = (url) => {
 };
 
 const getLeetCodeData = async (userName) => {
-  console.log(userName);
   try {
     const response = await axios.post(LEETCODE_BASE_URL, {
       query: LEETCODE_GQL_QUERY,
