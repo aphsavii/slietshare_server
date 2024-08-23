@@ -579,6 +579,10 @@ const getProfileViews = asyncHandler(async (req, res) => {
     };
   });
 
+  // sort by view time most rescent first
+  users = users.sort((a, b) => b.viewTime - a.viewTime);
+
+
   return res
     .status(200)
     .json(new ApiResponse(200, "Profile views fetched successfully", users));
