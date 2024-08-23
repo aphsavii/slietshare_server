@@ -148,10 +148,9 @@ const getCodeforcesLeaderboard = asyncHandler(async (req, res) => {
     }
     codeforcesData = codeforcesApiResponse.users;
   } catch (error) {
-    // return { error: "Failed to fetch Codeforces data" };
     return res
       .status(500)
-      .json(new ApiError("SOmething went wrong", 500, ["Error feting Data"]));
+      .json(new ApiError("Something went wrong", 500, ["Error fetching Data"]));
   }
 
   // Merge the API data with the corresponding user information
@@ -163,10 +162,19 @@ const getCodeforcesLeaderboard = asyncHandler(async (req, res) => {
     return { ...user.toObject(), codeforcesData: apiData || null };
   });
 
+  // Sort the users:
+  // 1. Users with maxRating (sorted by maxRating in descending order)
+  // 2. Users without maxRating at the end
   const sortedCodeforcesData = mergedCodeforcesData.sort((a, b) => {
-    if (!a.codeforcesData) return 1;
-    if (!b.codeforcesData) return -1;
-    return b.codeforcesData.rating - a.codeforcesData.rating;
+    const maxRatingA = a.codeforcesData?.maxRating;
+    const maxRatingB = b.codeforcesData?.maxRating;
+
+    if (maxRatingA != null && maxRatingB != null) {
+      return maxRatingB - maxRatingA;
+    }
+    if (maxRatingA != null) return -1;
+    if (maxRatingB != null) return 1;
+    return 0; // Both users don't have maxRating, keep their relative order
   });
 
   return res
