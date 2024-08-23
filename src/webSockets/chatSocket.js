@@ -80,8 +80,8 @@ const chatEvents = async (socket) => {
   socket.on("conversation:read", async (data) => {
     const to  = data;
     const user = await isUserActive(to);
-    io.to(user).emit("chat:seen", regno);
-    console.log("chat seen");
+    if(user)
+      io.to(user).emit("chat:seen", regno);
     await redisClient.hSet(
       `conversation:isRead`,
       `conversation:${to}-${regno}`,
