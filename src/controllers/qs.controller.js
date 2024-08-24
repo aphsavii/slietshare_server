@@ -73,7 +73,8 @@ const uploadQs = asyncHandler(async (req, res) => {
       status: 'pending'
     }),
     uploadedBy: user._id,
-  });
+  },
+);
 
   if (!qs) {
     await deleteFromCloudinary(qsUrl);
@@ -238,11 +239,13 @@ const getQsbyUser = asyncHandler(async (req, res) => {
             "type":1,
             "status":1,
             "qsUrl":1,
+            "createdAt":1,
             "uploadedBy.regno": 1,
             "uploadedBy.fullName": 1,
             "uploadedBy.email":1,
           },
         },
+        // sort by most recent
         {
           $sort: {
             createdAt: -1,
