@@ -136,8 +136,8 @@ const getQs = asyncHandler(async (req, res) => {
   // console.log(qs);
   if (!qs)
     return res.status(404).json(new ApiError("Question papers not found", 404));
-  if (qs.length == 0)
-    return res.status(404).json(new ApiError("Question papers not found", 404));
+  // if (qs.length == 0)
+  //   return res.status(200).json(new ApiResponse(200,"Question papers not found",[]));
   return res.status(200).json(new ApiResponse(200, "Question papers", qs));
 });
 
