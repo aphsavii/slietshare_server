@@ -18,6 +18,7 @@ import { registerUser,
 } from "../controllers/user.controller.js";
 import { followUser, unfollowUser,getMyFollowers } from "../controllers/follow.controller.js";
 import { validateProfile } from "../controllers/validate.controller.js";
+import { explore } from "../controllers/explore.controller.js";
 const userRouter = Router();
 
 userRouter.route('/register').post( 
@@ -46,5 +47,6 @@ userRouter.get('/notifications/unread',verifyJwt,getNotifications);
 userRouter.get('/suggested-profiles',verifyJwt,suggestedProfiles);
 userRouter.get('/:regno',verifyJwt,getUserDetails);
 userRouter.post('/view-profile/:regno',verifyJwt,userProfileView);
+userRouter.post('/explore',explore);
 
 export {userRouter}
