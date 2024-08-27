@@ -45,6 +45,12 @@ const explore = asyncHandler(async (req, res) => {
     const users = await User.aggregate([
       { $match: filters },
       {
+        // not in the list of users
+        $match: {
+          regno: { $nin: [user.regno,1111111,2010215,2010247] },
+        },
+      },
+      {
         // Join with the follow collection and get the followers array
         $lookup: {
           from: "follows",
