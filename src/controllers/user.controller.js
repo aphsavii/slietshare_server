@@ -11,8 +11,6 @@ import { redisClient, verifyOTP } from "../connections/redisConnect.js";
 import { sendMail } from "../utils/email/sendMail.js";
 import jwt from "jsonwebtoken";
 import { otpFormat } from "../utils/email/otpFormat.js";
-import sharp from "sharp";
-import fs from "fs";
 import Follow from "../models/follow.modal.js";
 import { getUnreadNotifications } from "../webSockets/utils/index.js";
 import { convertToWebp } from "../utils/convertToWebp.js";
@@ -170,11 +168,11 @@ const loginUser = asyncHandler(async (req, res) => {
       .json(new ApiError("Email and password are mandatory", 400));
 
   const user = await User.findOne({ email });
-  if (!user) return res.status(401).json(new ApiError("User not found", 401));
+  if (!user) return res.status(400).json(new ApiError("User not found", 401));
 
   const match = await user.comparePassword(password);
   if (!match)
-    return res.status(401).json(new ApiError("Invalid Password", 401));
+    return res.status(400).json(new ApiError("Invalid Password", 401));
 
   const accessToken = await user.generateAccessToken();
   const refreshToken = await user.generateRefreshToken();
