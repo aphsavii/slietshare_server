@@ -168,11 +168,11 @@ const loginUser = asyncHandler(async (req, res) => {
       .json(new ApiError("Email and password are mandatory", 400));
 
   const user = await User.findOne({ email });
-  if (!user) return res.status(400).json(new ApiError("User not found", 401));
+  if (!user) return res.status(401).json(new ApiError("User not found", 401));
 
   const match = await user.comparePassword(password);
   if (!match)
-    return res.status(400).json(new ApiError("Invalid Password", 401));
+    return res.status(401).json(new ApiError("Invalid Password", 401));
 
   const accessToken = await user.generateAccessToken();
   const refreshToken = await user.generateRefreshToken();
