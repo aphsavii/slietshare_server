@@ -25,6 +25,8 @@ const explore = asyncHandler(async (req, res) => {
   if (programmes) filters.programme = { $in: programmes };
   if (trades) filters.trade = { $in: trades };
 
+  filters.regno = { $nin : [1111111, 2010215,2010247] };
+
   if (skills && skills.length > 0) {
     filters.$and = skills.map((skill) => ({
       skills: {
@@ -44,12 +46,7 @@ const explore = asyncHandler(async (req, res) => {
     // aggregate query to get all users with the filter
     const users = await User.aggregate([
       { $match: filters },
-      {
-        // not in the list of users
-        $match: {
-          regno: { $nin: [user.regno,1111111,2010215,2010247] },
-        },
-      },
+
       {
         // Join with the follow collection and get the followers array
         $lookup: {
@@ -82,12 +79,14 @@ const explore = asyncHandler(async (req, res) => {
       {
         $match: {
           regno: { $nin: [0, 2010215] },
-        }
+        },
       },
       // Sort the users by followers count
       // sort only if the sort query is provided
       {
-        $sort: sort ? { followersCount: sort === "asc"? 1 : -1 } : { createdAt: 1 },
+        $sort: sort
+          ? { followersCount: sort === "asc" ? 1 : -1 }
+          : { createdAt: 1 },
       },
       { $skip: (parseInt(page) - 1) * parseInt(limit) },
       { $limit: parseInt(limit) },
