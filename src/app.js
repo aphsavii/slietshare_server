@@ -9,12 +9,7 @@ import { setActiveUser, removeActiveUser } from './webSockets/utils/index.js';
 import { socketEvents } from './webSockets/index.js';
 const app = express();
 const httpServer = createServer(app);
-// const io = new Server(httpServer,{
-//     cors:{
-//         origin: process.env.CORS_ORIGIN,
-//         credentials: true
-//     }
-// });
+const io = new Server(httpServer);
 
 // Middlewares
 io.use((socket,next)=>{
