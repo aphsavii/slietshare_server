@@ -238,11 +238,15 @@ const getLeetcodeLeaderboard = asyncHandler(async (req, res) => {
     "socialLinks.leetcode": { $type: "string", $ne: "" },
   }).select("fullName socialLinks.leetcode regno");
 
+  
+
   // Extract usernames from the social links
   const leetcodeUsernames = leetcodeUsers.map((user) => ({
     regno: user.regno,
     username: getLastRouteSegment(user.socialLinks.leetcode),
   }));
+
+  // return res.send(leetcodeUsernames);
 
   // Fetch LeetCode data from the API
   let leetcodeData = [];
@@ -265,14 +269,14 @@ const getLeetcodeLeaderboard = asyncHandler(async (req, res) => {
   // Merge the API data with the corresponding user information
   const mergedLeetcodeData = leetcodeUsers.map((user) => {
     const apiData = leetcodeData.find(
-      (data) => data.username === getLastRouteSegment(user.socialLinks.leetcode)
+      (data) => data?.username === getLastRouteSegment(user.socialLinks.leetcode) 
     );
     return { ...user.toObject(), leetcodeData: apiData || null };
   });
 
   // Helper function to get the number of problems solved
   const getProblemsSolved = (user) => {
-    if (!user.leetcodeData || !user.leetcodeData.questionsSolved) return 0;
+    if (!user?.leetcodeData || !user?.leetcodeData?.questionsSolved) return 0;
     const solved = user.leetcodeData.questionsSolved.split('/')[0];
     return parseInt(solved, 10) || 0;
   };
